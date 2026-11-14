@@ -15,15 +15,16 @@ canvas{display:block;position:fixed;inset:0}
 .card{background:var(--card);border:1px solid var(--line);backdrop-filter:blur(18px);border-radius:16px}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;pointer-events:auto}
 button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+svg.ic.f{fill:currentColor;stroke:none}
 svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 #hud{position:fixed;inset:0;pointer-events:none;display:none}
 /* список держав */
-#plist{position:absolute;left:16px;top:16px;padding:10px 12px;display:grid;gap:6px;width:214px}
-.pr{display:grid;grid-template-columns:8px 1fr 46px;align-items:center;gap:8px;font-size:12px;font-weight:700}
-.pr i{width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
-.pr span{color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pr span em{font-style:normal;color:var(--mut);font-weight:500;margin-left:5px;font-size:10px}
-.pr .bar{height:4px;border-radius:2px;background:rgba(148,163,184,.18);overflow:hidden}
+#plist{position:absolute;left:16px;top:16px;padding:8px 10px;display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;width:176px;pointer-events:auto}
+.pr{display:grid;grid-template-columns:7px 28px 1fr;align-items:center;gap:5px;font:700 10px 'JetBrains Mono',monospace}
+.pr i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.pr span{color:var(--mut)}
+.pr.me span{color:#fff}.pr.hum span{color:#fde047}
+.pr .bar{height:5px;border-radius:3px;background:rgba(148,163,184,.18);overflow:hidden}
 .pr .bar b{display:block;height:100%;background:currentColor;transition:width .4s}
 .pr.dead{opacity:.28}.pr.dead span{text-decoration:line-through}
 #top{position:absolute;left:50%;top:14px;transform:translateX(-50%);text-align:center}
@@ -91,7 +92,7 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;str
 .lab .n{font-family:Unbounded;font-weight:500;font-size:9px;letter-spacing:.07em;text-shadow:0 0 6px #000,0 0 2px #000;white-space:nowrap}
 .lab .hb{width:52px;height:5px;border-radius:3px;background:rgba(0,0,0,.55);margin:3px auto 0;overflow:hidden;border:1px solid rgba(255,255,255,.18)}
 .lab .hb b{display:block;height:100%;background:currentColor}
-.lab svg.ic{width:12px;height:12px;stroke-width:2.4}
+.lab svg.ic{width:13px;height:13px;stroke-width:2.4}
 .lab .sl{display:flex;gap:4px;align-items:center;justify-content:center;margin:3px auto 0;width:max-content;padding:2px 5px;border-radius:7px;background:rgba(5,7,13,.8);border:1px solid rgba(148,163,184,.25)}
 .lab .sl .k{display:flex;align-items:center;gap:1px;font:700 10px 'JetBrains Mono',monospace}
 .lab .sl i{width:6px;height:6px;border-radius:2px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.4)}
@@ -187,9 +188,9 @@ const CFG={
  homeHp:60, zoneHp:20,     // прочность столицы и обычной земли
  homeSlots:6, zoneSlots:3, // ячейки под оружие и щит
  capTime:20, pvoTime:16,   // сек на захват и на заряд щита
- pvoBase:.6, pvoDrone:.6, pvoPerLvl:.09, pvoRange:.42, armPerLvl:.15, ecoPerLvl:.2,
+ pvoRange:.42, armPerLvl:.15, ecoPerLvl:.2,
  coop:.45, coopMax:3,        // совместное исследование: каждая лишняя земля ускоряет на coop, максимум coopMax земель
- day:200,                  // сек на полный оборот солнца
+ day:90,                  // сек на полный оборот солнца
  fallout:75, wasteHp:.7, wasteSlots:2,   // сожжённая земля через fallout сек снова ничья, но слабее; второй раз сгорает навсегда
  aiThink:[2.5,4.5], aiAttackCd:[50,90], aiGrab:.3,   // aiGrab: как жадно боты хватают ничьи земли (0..1)
  diff:[{n:'легко',tick:1.5,aggro:.6},{n:'норм',tick:1,aggro:1},{n:'жесть',tick:.6,aggro:1.7}]
@@ -205,7 +206,7 @@ const WK=['d','t','m','i','h'],BK=[...WK,'pvo'];
 const UP={
  eco:{n:'Заводы',time:[60,100,150],desc:'Всё строится на 20% быстрее за уровень'},
  rkt:{n:'Ракетная программа',time:[80,150,220],desc:'Открывает: средние → МБР → гиперзвук'},
- pvo:{n:'Радары',time:[60,100,150],desc:'+9% к шансу перехвата и шире зона щита за уровень'},
+ pvo:{n:'Радары',time:[60,100,150],desc:'Один заряд сбивает на дрон больше, купол шире за уровень'},
  arm:{n:'Бункеры',time:[60,100,150],desc:'−15% получаемого урона за уровень'}};
 const UK=['eco','rkt','pvo','arm'];
 const POWERS=[
@@ -214,13 +215,13 @@ const POWERS=[
  ['USA','#3b82f6','Авианосные группы','ракеты достают на треть дальше, чем у остальных, морские высадки быстрее','ДАЛЬШЕ'],
  ['KOR','#f472b6','Точная электроника','тактические ракеты летят парой: две за одну стройку','×2'],
  ['DEU','#e2e8f0','Инженерия','стартует с заводами и ракетной программой первого уровня','УР. 1'],
- ['GBR','#a78bfa','Морская разведка','морские высадки вдвое быстрее, щит сбивает чаще','МОРЕ ×2'],
+ ['GBR','#a78bfa','Морская разведка','морские высадки вдвое быстрее, купол щита на треть шире','МОРЕ ×2'],
  ['FRA','#22d3ee','Ударная сила','каждая ракета бьёт на 2 сильнее','+2 УРОН'],
  ['BRA','#4ade80','Освоение территорий','захватывает землю по суше вдвое быстрее','ЗАХВАТ ×2'],
  ['ZAF','#d9f99d','Ресурсный резерв','лишняя ячейка на каждой земле, и сами земли крепче','+1 ЯЧЕЙКА'],
  ['AUS','#fde047','Океанский тыл','земли сами чинятся, морские высадки быстрее','РЕМОНТ'],
  ['IRN','#2dd4bf','Беспилотный рой','в стае 6 дронов вместо 4, летят гораздо дальше и строятся быстрее','6 ДРОНОВ'],
- ['ISR','#fb923c','Железный купол','4 заряда щита на старте, дронов щит сбивает почти всегда, заряды строятся быстрее','4 ЩИТА']
+ ['ISR','#fb923c','Железный купол','4 заряда щита на старте, один заряд сбивает на 2 дрона больше, заряды строятся быстрее','4 ЩИТА']
 ].map(([a3,color,abil,adesc,badge])=>({a3,color,abil,adesc,badge,name:''}));
 const WCOL={d:'#a3e635',t:'#f8fafc',m:'#fbbf24',i:'#f87171',h:'#c4b5fd',pvo:'#38bdf8'};
 const NEUTRAL='#4b5b7d';
@@ -260,7 +261,7 @@ function pushOwn(){tc.set('#28324a');ownData.set([tc.r*255,tc.g*255,tc.b*255,255
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
 const PR=Math.min(devicePixelRatio,2);
 renderer.setPixelRatio(PR);renderer.setSize(innerWidth,innerHeight);
-renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
 document.body.prepend(renderer.domElement);
 const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(40,innerWidth/innerHeight,.01,300);
@@ -271,7 +272,7 @@ controls.minDistance=1.1;controls.maxDistance=7;controls.autoRotate=true;control
 let zoomT=3.6;
 const composer=new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene,camera));
-composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.6,.55,.86));composer.addPass(new OutputPass());
+composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.28,.4,.93));composer.addPass(new OutputPass());
 const NOISE=`
 float hash(vec3 p){p=fract(p*.3183099+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}
 float vn(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);
@@ -304,7 +305,7 @@ const globe=new THREE.Mesh(new THREE.SphereGeometry(1,160,120),new THREE.ShaderM
   float glow=texture2D(tLine,vUv,4.5).r,bglow=texture2D(tLine,vUv,2.).g;
   float f=fbm(n*9.);
   vec3 lc=own*(.50+.22*f)+(own*.55+.28)*border+own*bglow*.25;
-  float L=texture2D(tLights,vUv).r;float sun=dot(n,uSun),day=smoothstep(-.12,.3,sun);
+  float L=texture2D(tLights,vUv).r;float sun=dot(n,uSun),day=smoothstep(-.1,.2,sun);
   float bt=mix(.24,.82,dmg);float burnt=dmg>.002?1.-smoothstep(bt-.07,bt,fbm(n*14.+2.)):0.;
   float cr=1.-abs(fbm(n*24.)*2.-1.);
   vec3 dead=vec3(.03,.02,.02)+vec3(2.6,.6,.08)*pow(cr,9.)*(.55+.45*sin(uTime*2.+f*30.))+vec3(.4,.1,.03)*border;
@@ -313,23 +314,25 @@ const globe=new THREE.Mesh(new THREE.SphereGeometry(1,160,120),new THREE.ShaderM
   vec3 oc=mix(vec3(.02,.075,.18),vec3(.045,.14,.30),facing)+vec3(.03,.22,.34)*glow*glow;
   oc+=vec3(.06,.13,.26)*max(gl(vUv.x*36.),gl(vUv.y*18.))*.22;
   vec3 col=mix(oc,lc,land)*(.72+.28*facing);
-  col*=mix(.5,1.12,day);
-  col+=vec3(1.,.82,.55)*pow(L,1.6)*.85*(1.-day)*land*(1.-burnt);
-  col+=vec3(1.,.45,.15)*smoothstep(.2,0.,abs(sun-.04))*.06;
-  col+=vec3(1.,.92,.75)*pow(max(dot(reflect(-uSun,n),normalize(vV)),0.),50.)*.3*(1.-land)*day;
-  col+=vec3(.18,.5,1.)*pow(1.-facing,3.2)*.75;
+  col*=mix(.26,1.,day);
+  col+=own*(border*.45+bglow*.1)*(1.-day)*land*(1.-burnt);
+  col+=vec3(1.,.8,.5)*pow(L,1.4)*1.15*(1.-day)*land*(1.-burnt);
+  col+=vec3(1.,.42,.14)*smoothstep(.16,0.,abs(sun-.03))*.12*(.35+.65*(1.-facing));
+  col+=vec3(1.,.92,.75)*pow(max(dot(reflect(-uSun,n),normalize(vV)),0.),50.)*.16*(1.-land)*day;
+  col+=vec3(.18,.5,1.)*pow(1.-facing,3.2)*.6*(.12+.88*smoothstep(-.3,.3,sun));
   gl_FragColor=vec4(col,1.);}`}));
 scene.add(globe);
-scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.1,64,48),new THREE.ShaderMaterial({side:THREE.BackSide,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.1,64,48),new THREE.ShaderMaterial({uniforms:{uSun:GU.uSun},side:THREE.BackSide,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
  vertexShader:`varying vec3 vN,vV;void main(){vec4 w=modelMatrix*vec4(position,1.);vN=normalize(mat3(modelMatrix)*normal);vV=normalize(cameraPosition-w.xyz);gl_Position=projectionMatrix*viewMatrix*w;}`,
- fragmentShader:`varying vec3 vN,vV;void main(){float a=pow(clamp(dot(-vN,vV),0.,1.),3.6);gl_FragColor=vec4(vec3(.16,.46,1.)*a*1.9,1.);}`})));
+ fragmentShader:`uniform vec3 uSun;varying vec3 vN,vV;void main(){float a=pow(clamp(dot(-vN,vV),0.,1.),3.6),sd=dot(normalize(vN),uSun),d=smoothstep(-.35,.35,sd);
+  gl_FragColor=vec4((vec3(.16,.46,1.)*(.1+.9*d)+vec3(1.,.42,.16)*smoothstep(.3,0.,abs(sd))*.4)*a*1.3,1.);}`})));
 new THREE.TextureLoader().setCrossOrigin('anonymous').load('https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/textures/planets/earth_lights_2048.png',t=>{t.anisotropy=8;GU.tLights.value=t;});
 
 const glowTex=(()=>{const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');
  const g=x.createRadialGradient(64,64,0,64,64,64);g.addColorStop(0,'#fff');g.addColorStop(.25,'rgba(255,255,255,.55)');g.addColorStop(.6,'rgba(255,255,255,.12)');g.addColorStop(1,'rgba(255,255,255,0)');
  x.fillStyle=g;x.fillRect(0,0,128,128);return new THREE.CanvasTexture(c);})();
 const mkSprite=(col,s,k=1)=>{const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:new THREE.Color(col).multiplyScalar(k),blending:THREE.AdditiveBlending,depthWrite:false,transparent:true}));sp.scale.setScalar(s);return sp;};
-const sunSp=mkSprite('#fff0c4',11,2.2);scene.add(sunSp);
+const sunSp=mkSprite('#fff0c4',5,1);scene.add(sunSp);
 const MAXP=12000,pp=new Float32Array(MAXP*3),pv=new Float32Array(MAXP*3),pc=new Float32Array(MAXP*3),pa=new Float32Array(MAXP),ps=new Float32Array(MAXP),pl=new Float32Array(MAXP),pm=new Float32Array(MAXP);
 let pcur=0;
 const pg=new THREE.BufferGeometry();
@@ -390,8 +393,9 @@ const wTime=(p,w)=>(w==='pvo'?CFG.pvoTime*(is(p,'ISR')?.6:1):WPN[w].time*(is(p,'
 const wLvl=(p,w)=>w==='pvo'?0:WPN[w].lvl-(is(p,'RUS')&&w==='i'?1:0);
 const wDmg=(p,w)=>WPN[w].dmg+(is(p,'FRA')&&w!=='d'?2:0);
 const wCount=(p,w)=>w==='d'?(is(p,'IRN')?6:4):w==='t'&&is(p,'KOR')?2:1;
-const pvoChance=(p,w)=>w==='d'&&is(p,'ISR')?.95:Math.min(.95,(w==='d'?CFG.pvoDrone:CFG.pvoBase)+CFG.pvoPerLvl*PW[p].up.pvo+(is(p,'GBR')?.08:is(p,'ISR')?.1:0));
-const pvoRange=p=>CFG.pvoRange+.06*PW[p].up.pvo;
+/* щит без случайности: заряд сбивает всегда. 1 заряд на ракету, 2 на МБР, один заряд на несколько дронов */
+const dronesPer=p=>2+PW[p].up.pvo+(is(p,'ISR')?2:0);
+const pvoRange=p=>(CFG.pvoRange+.06*PW[p].up.pvo)*(is(p,'GBR')?1.3:1);
 const upTime=(p,k)=>UP[k].time[PW[p].up[k]];
 const capTime=p=>CFG.capTime*(is(p,'BRA')?.5:1);
 const hpMul=p=>is(p,'ZAF')?1.25:1;
@@ -406,8 +410,13 @@ const hostile=(p,t)=>t.alive&&t.owner>=0&&team[t.owner]!==team[p];
 const capDuration=(p,s,t)=>t.adj.includes(s)?capTime(p):(45+ang(s,t)*20)*(is(p,'GBR')?.5:is(p,'AUS')?.75:is(p,'USA')?.8:1);
 const capSources=(p,t)=>[...new Set([...t.adj,...t.sea])].filter(s=>s.alive&&s.owner===p&&!s.job).sort((a,b)=>capDuration(p,a,t)-capDuration(p,b,t));
 const canCap=(p,t)=>t.alive&&t.owner===-1&&!t.cap&&capSources(p,t).length>0;
-/* чей щит прикроет землю t: ближайшая своя или союзная земля с зарядом */
-const defender=t=>{const o=t.owner;let best=null,bd=pvoRange(o)+1e-6;for(const s of T){if(!s.alive||s.owner<0||team[s.owner]!==team[o]||s.st.pvo<=0)continue;const d=s===t?0:ang(s,t);if(d<bd){bd=d;best=s;}}return best;};
+/* чьи щиты прикрывают землю t: свои и союзные земли с зарядом, ближние первыми */
+const defenders=t=>{const o=t.owner,d=s=>s===t?0:ang(s,t);return T.filter(s=>s.alive&&s.owner>=0&&team[s.owner]===team[o]&&s.st.pvo>0&&d(s)<pvoRange(s.owner)+1e-6).sort((a,b)=>d(a)-d(b));};
+function shieldUse(q){const t=q.T,D=defenders(t);
+ if(q.w==='d'){const key=q.owner+'|'+q.si,c=t.dc;if(c&&c.key===key&&c.n>0&&time-c.at<8&&c.df.alive){c.n--;return c.df;}
+  if(!D.length)return null;const df=D[0];df.st.pvo--;df.dirty=true;t.dc={key,n:dronesPer(df.owner)-1,df,at:time};return df;}
+ let left=q.w==='i'?2:1;if(D.reduce((a,x)=>a+x.st.pvo,0)<left)return null;
+ for(const x of D){const k=Math.min(left,x.st.pvo);x.st.pvo-=k;x.dirty=true;left-=k;if(!left)break;}return D[0];}
 
 /* --- маркеры и подписи --- */
 const mgeo=new THREE.PlaneGeometry(1,1);
@@ -435,29 +444,29 @@ let shake=0;const shakeV=new THREE.Vector3();
 function shock(pos,size,col,dur){const u={t:{value:0},c:{value:new THREE.Color(col)}};
  const m=new THREE.Mesh(mgeo,new THREE.ShaderMaterial({uniforms:u,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
   vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
-  fragmentShader:`uniform float t;uniform vec3 c;varying vec2 vUv;void main(){float r=length(vUv*2.-1.);float w=smoothstep(.1,0.,abs(r-t*.95))+.35*smoothstep(.3,0.,abs(r-t*.6));gl_FragColor=vec4(c*w*(1.-t)*(1.-t)*3.,1.);}`}));
+  fragmentShader:`uniform float t;uniform vec3 c;varying vec2 vUv;void main(){float r=length(vUv*2.-1.);float w=smoothstep(.1,0.,abs(r-t*.95))+.35*smoothstep(.3,0.,abs(r-t*.6));gl_FragColor=vec4(c*w*(1.-t)*(1.-t)*1.6,1.);}`}));
  m.position.copy(pos);m.lookAt(pos.clone().multiplyScalar(3));m.scale.setScalar(size);scene.add(m);
  let t=0;fx.push(dt=>{t+=dt/dur;u.t.value=t;if(t>=1){scene.remove(m);m.material.dispose();return false;}return true;});}
-function fireball(pos,size,col,dur,rise=0){const s=mkSprite(col,size*.2,4);s.position.copy(pos);scene.add(s);const up=pos.clone().normalize();
+function fireball(pos,size,col,dur,rise=0){const s=mkSprite(col,size*.2,1.8);s.position.copy(pos);scene.add(s);const up=pos.clone().normalize();
  let t=0;fx.push(dt=>{t+=dt/dur;const e=1-Math.pow(1-t,3);s.scale.setScalar(size*(.2+e));s.material.opacity=1-t*t;s.position.addScaledVector(up,rise*dt);
   if(t>=1){scene.remove(s);s.material.dispose();return false;}return true;});}
 const tmpV=new THREE.Vector3(),tmpC=new THREE.Color();
-function burst(pos,n,speed,col,size,life,k=3){const up=pos.clone().normalize();
+function burst(pos,n,speed,col,size,life,k=1.8){const up=pos.clone().normalize();
  for(let i=0;i<n;i++){tmpV.randomDirection();if(tmpV.dot(up)<0)tmpV.addScaledVector(up,-2*tmpV.dot(up));tmpV.multiplyScalar(speed*(.2+Math.random()));
   emit(pos,tmpV,col,size*(.5+Math.random()),life*(.4+Math.random()*.8),k);}}
 function nuke(pos,s=1){pos=pos.clone().normalize().multiplyScalar(1.012);
- fireball(pos,.4*s,'#ffffff',.5);fireball(pos,.36*s,'#ffb030',1.6,.02);fireball(pos.clone().multiplyScalar(1.015),.2*s,'#ff3a10',2.6,.04);
+ fireball(pos,.24*s,'#ffffff',.5);fireball(pos,.36*s,'#ffb030',1.6,.02);fireball(pos.clone().multiplyScalar(1.015),.2*s,'#ff3a10',2.6,.04);
  shock(pos,.7*s,'#ffd9a0',1.6);shock(pos,.36*s,'#ff5a20',2.4);
  burst(pos,Math.round(300*s),.34*s,tmpC.set('#ffb040'),.022,1.8);burst(pos,Math.round(140*s),.14*s,tmpC.set('#ff4018'),.035,2.8);burst(pos,Math.round(60*s),.5*s,tmpC.set('#ffffff'),.012,1.2);
  const near=camera.position.clone().normalize().dot(pos.clone().normalize());
- if(near>.2){shake=Math.max(shake,.03*s*near);if(s>.75){$('flash').style.transition='none';$('flash').style.opacity=.3*near;setTimeout(()=>{$('flash').style.transition='opacity .9s';$('flash').style.opacity=0;},40);}}
+ if(near>.2){shake=Math.max(shake,.03*s*near);}
  S.boom(Math.min(s,1)*(near>0?1:.4));}
 function airburst(pos,col){fireball(pos,.1,'#ffffff',.35);fireball(pos,.13,col,.8);burst(pos,70,.25,tmpC.set(col),.016,1);burst(pos,30,.15,tmpC.set('#ffffff'),.012,.7);S.pop();}
 /* эффекты, которые хост пересылает гостю */
 const FXN={
  nuke:(i,s)=>nuke(T[i].pos,s),
  air:(x,y,z,col)=>airburst(new THREE.Vector3(x,y,z),col),
- intc:(i,x,y,z,dur)=>{const from=T[i].pos.clone().multiplyScalar(1.015),to=new THREE.Vector3(x,y,z),h=mkSprite('#bfe9ff',.03,5);scene.add(h);let t=0;const c=new THREE.Color('#9fdcff'),z0=new THREE.Vector3();S.launch(.5);
+ intc:(i,x,y,z,dur)=>{T[i].domeF=1;const from=T[i].pos.clone().multiplyScalar(1.015),to=new THREE.Vector3(x,y,z),h=mkSprite('#bfe9ff',.03,5);scene.add(h);let t=0;const c=new THREE.Color('#9fdcff'),z0=new THREE.Vector3();S.launch(.5);
   fx.push(dt=>{t+=dt/dur;h.position.lerpVectors(from,to,Math.min(t,1));emit(h.position,z0,c,.014,.6,2);if(t>=1){scene.remove(h);h.material.dispose();return false;}return true;});},
  shock:(i,o)=>{shock(T[i].pos.clone().multiplyScalar(1.014),.45,pcol(o),1.6);shock(T[i].pos.clone().multiplyScalar(1.014),.25,'#ffffff',1.1);},
  log:(m,c)=>log(m,c)};
@@ -517,6 +526,23 @@ function setRing(m,c,r,w,col,dash,a){const P=m.geometry.attributes.position;rN.c
  P.needsUpdate=true;const u=m.material.uniforms;u.uCol.value.set(col);u.uDash.value=dash;u.uA.value=a;m.visible=true;}
 function showRings(list){const key=list.map(r=>r.join()).join('|');if(key===ringKey)return;ringKey=key;
  list.forEach((r,i)=>setRing(ringPool[i]||(ringPool[i]=mkRing()),T[r[0]].pos,r[1],r[2],r[3],r[4],r[5]));for(let i=list.length;i<ringPool.length;i++)ringPool[i].visible=false;}
+/* купола щита: видно, какие земли прикрыты */
+const DR=14,DT=56,domeIdx=[];for(let i=0;i<DR;i++)for(let j=0;j<DT;j++){const a=i*(DT+1)+j,b=a+DT+1;domeIdx.push(a,b,a+1,a+1,b,b+1);}
+function mkDome(t){const g=new THREE.BufferGeometry(),n=(DR+1)*(DT+1);g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(n*3),3));
+ const uv=new Float32Array(n*2);for(let i=0;i<=DR;i++)for(let j=0;j<=DT;j++)uv.set([i/DR,j/DT],(i*(DT+1)+j)*2);g.setAttribute('aU',new THREE.BufferAttribute(uv,2));g.setIndex(domeIdx);
+ t.du={uCol:{value:new THREE.Color()},uA:{value:0},uF:{value:0}};
+ t.dome=new THREE.Mesh(g,new THREE.ShaderMaterial({uniforms:t.du,transparent:true,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,
+  vertexShader:`attribute vec2 aU;varying vec2 vU;void main(){vU=aU;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+  fragmentShader:`uniform vec3 uCol;uniform float uA,uF;varying vec2 vU;
+  float gl(float x){float l=abs(fract(x-.5)-.5)/fwidth(x);return 1.-min(l,1.);}
+  void main(){float edge=smoothstep(.93,1.,vU.x),grid=max(gl(vU.x*4.),gl(vU.y*18.))*step(.03,vU.x);
+   gl_FragColor=vec4(uCol*(edge*.7+grid*.07+.01+uF*(.3+grid))*uA,1.);}`}));
+ t.dome.frustumCulled=false;scene.add(t.dome);}
+function setDome(t,r){const P=t.dome.geometry.attributes.position;rN.copy(t.pos).normalize();rU.crossVectors(rN,Math.abs(rN.y)<.9?YA:XA).normalize();rV.crossVectors(rN,rU);
+ for(let i=0;i<=DR;i++){const u=i/DR,a=u*r,R=1.014+.05*Math.sqrt(Math.max(0,1-u*u)),sn0=Math.sin(a)*R,co=Math.cos(a)*R;
+  for(let j=0;j<=DT;j++){const th=j/DT*6.2831853,cs=Math.cos(th),sn=Math.sin(th);
+   P.setXYZ(i*(DT+1)+j,rN.x*co+(rU.x*cs+rV.x*sn)*sn0,rN.y*co+(rU.y*cs+rV.y*sn)*sn0,rN.z*co+(rU.z*cs+rV.z*sn)*sn0);}}
+ P.needsUpdate=true;t.domeR=r;}
 /* d — данные снаряда (их же шлём по сети); здесь к ним добавляется картинка */
 function mkProj(d){const src=T[d.si],tg=T[d.ti],c=pcol(d.owner),W_=WPN[d.w];
  const q=Object.assign({a:src.pos,b:tg.pos,T:tg,h:W_.h,col:new THREE.Color(c),pos:new THREE.Vector3(),prev:src.pos.clone(),checked:false,ic:null},d);
@@ -561,7 +587,7 @@ function stepProjs(dt,auth){for(const q of projs){if(q.dead)continue;q.t+=dt/q.d
   if(!auth)continue;
   const o=q.T.owner;
   if(!q.checked&&t>=(q.w==='d'?.8:.72)){q.checked=true;
-   if(!WPN[q.w].nopvo&&hostile(q.owner,q.T)){const df=defender(q.T);if(df){df.st.pvo--;df.dirty=true;const tHit=q.w==='d'?.93:.9;q.ic={t:tHit,ok:Math.random()<pvoChance(df.owner,q.w)};
+   if(!WPN[q.w].nopvo&&hostile(q.owner,q.T)){const df=shieldUse(q);if(df){const tHit=q.w==='d'?.93:.9;q.ic={t:tHit,ok:true};
     const to=projPos(q,tHit,new THREE.Vector3());fxNet('intc',df.i,to.x,to.y,to.z,Math.max((tHit-q.t)*q.dur,.2));}}}
   if(q.ic&&t>=q.ic.t){if(q.ic.ok){fxNet('air',q.pos.x,q.pos.y,q.pos.z,q.w==='d'?'#ffd27a':'#7fd0ff');killProj(q);continue;}q.ic=null;}
   if(q.t>=1){hit(q);killProj(q);}}
@@ -725,12 +751,17 @@ $('mjoinb').onclick=()=>{if(net||netPeer||connecting||running)return;const code=
 /* ================= ИНТЕРФЕЙС ================= */
 const svg=p=>`<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
 const RK='<path d="M12 2c3 3 4 7 4 11l-4 3-4-3c0-4 1-8 4-11z"/><path d="M8 14l-3 4 4-1M16 14l3 4-4-1M12 16v5"/>';
-const IC={d:svg('<path d="M12 3l9 16-9-4-9 4z"/>'),t:svg(RK),m:svg(RK+'<path d="M4 4h3M17 4h3"/>'),i:svg(RK+'<circle cx="12" cy="9" r="1.6"/><path d="M3 5h4M17 5h4M3 8h3M18 8h3"/>'),
- h:svg('<path d="M13 2L5 14h6l-1 8 9-13h-6z"/>'),pvo:svg('<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>'),cap:svg('<path d="M6 21V4h11l-2 4 2 4H6"/>'),
- eco:svg('<circle cx="12" cy="12" r="8.5"/><path d="M13 6l-4 7h6l-4 5"/>'),rkt:svg(RK+'<path d="M19 6V2m-2 2l2-2 2 2"/>'),arm:svg('<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 8v8M8 12h8"/>'),
+const fsvg=p=>`<svg class="ic f" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="${p}"/></svg>`;
+/* силуэты разной формы: крыло, пуля, ракета с крыльями, гриб, молния, щит */
+const IC={d:fsvg('M12 3l10 17-10-5-10 5z'),t:fsvg('M12 2c3 2.500 4 6 4 9v10H8V11c0-3 1-6.500 4-9z'),
+ m:fsvg('M12 1c3 3 4 7 4 11l5 6v4l-6-3H9l-6 3v-4l5-6c0-4 1-8 4-11z'),
+ i:fsvg('M12 2c5.500 0 10 2.800 10 6.500 0 2.200-2.200 3.500-5.500 3.500H15l1 6 4 4H4l4-4 1-6H7.500C4.200 12 2 10.700 2 8.500 2 4.800 6.500 2 12 2z'),
+ h:fsvg('M14 1L3 14h7l-2 9 13-15h-8z'),pvo:fsvg('M12 2l9 3.500V12c0 5.500-4 9-9 10.500C7 21 3 17.500 3 12V5.500z'),cap:fsvg('M5 22V2h2v1h13l-3.500 5L20 13H7v9z'),
+ eco:fsvg('M2 22V11l6 4v-4l6 4V3h6v19z'),rkt:fsvg('M9 2h6v2h-1v5l6.300 10.500c.700 1.200-.200 2.500-1.500 2.500H5.200c-1.300 0-2.200-1.300-1.500-2.500L10 9V4H9z'),
+ arm:fsvg('M1 21v-5l4-8h14l4 8v5zM8 13v2.500h8V13z'),rad:fsvg('M3 5l16 16A11.300 11.300 0 013 5zM17.500 2a4.500 4.500 0 110 9 4.500 4.500 0 010-9z'),
  pause:svg('<path d="M8 5v14M16 5v14"/>'),play:svg('<path d="M7 4l13 8-13 8z"/>'),snd:svg('<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 8c1.5 1.5 1.5 6.5 0 8"/>'),mute:svg('<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l4 6m0-6l-4 6"/>'),help:svg('<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-1 .7-1.5 1.2-1.5 2.5M12 17.5v.1"/>'),
  all:svg('<path d="M12 21V3M8 7l4-4 4 4M5 21v-9M2.5 14.5L5 12l2.5 2.5M19 21v-9M16.5 14.5L19 12l2.5 2.5"/>'),
- rad:svg('<path d="M3.5 17a12 12 0 0117 0M7 14a7 7 0 0110 0"/><circle cx="12" cy="18.5" r="1.6"/>'),x:svg('<path d="M6 6l12 12M18 6L6 18"/>'),box:svg('<path d="M4 8l8-4 8 4v8l-8 4-8-4z"/><path d="M4 8l8 4 8-4M12 12v8"/>'),
+ x:svg('<path d="M6 6l12 12M18 6L6 18"/>'),box:svg('<path d="M4 8l8-4 8 4v8l-8 4-8-4z"/><path d="M4 8l8 4 8-4M12 12v8"/>'),
  star:svg('<path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.2 6-5.5-3-5.5 3 1.2-6L3.2 9.4l6.1-.8z"/>')};
 const rangeTxt=r=>r>3?'вся планета':r>1.2?'дальняя':r>.7?'средняя':'ближняя';
 function buildDock(){
@@ -750,7 +781,7 @@ function refreshDock(){if(!running)return;const P=PW[me],mine=lands(me),idle=min
  document.querySelectorAll('.ub').forEach(b=>{const k=b.dataset.up,l=P.up[k],R=resLands(me,k),j=R[0];b.querySelectorAll('.pips i').forEach((x,i)=>x.classList.toggle('on',i<l));
   b.querySelector('.cost').textContent=l>=3?'макс':j?Math.round(j.job.t/j.job.dur*100)+'%'+(R.length>1?' ×'+R.length:''):Math.round(upTime(me,k))+'с';b.classList.toggle('off',l>=3||R.length>=CFG.coopMax||!idle.length);b.classList.toggle('run',!!j);});}
 function tipHtml(el){const P=PW[me];
- if(el.dataset.buy){const w=el.dataset.buy;if(w==='pvo')return`<b>Щит</b>Стоит в земле и сам сбивает то, что летит в неё и в твои земли рядом. Один заряд на одну цель.<small>шанс ${Math.round(pvoChance(me,'t')*100)}% · строится ${Math.round(wTime(me,w))} с · занимает ячейку</small>`;
+ if(el.dataset.buy){const w=el.dataset.buy;if(w==='pvo')return`<b>Щит</b>Купол над землёй и соседями, сбивает всегда. 1 заряд на ракету, 2 на МБР, один заряд на ${dronesPer(me)} дрона. Гиперзвук проходит.<small>купол видно на глобусе · строится ${Math.round(wTime(me,w))} с · занимает ячейку</small>`;
   const lock=P.up.rkt<wLvl(me,w);return`<b>${WPN[w].n}</b>${WPN[w].desc}<small>урон ${wDmg(me,w)}${w==='d'?' × '+wCount(me,w):''} · дальность: ${rangeTxt(wRange(me,w))} · строится ${Math.round(wTime(me,w))} с${lock?' · нужна ракетная программа '+wLvl(me,w):''}</small>`;}
  if(el.dataset.up){const k=el.dataset.up;return`<b>${UP[k].n}</b>${UP[k].desc}<small>уровень ${P.up[k]} из 3 · можно подключить до ${CFG.coopMax} земель: каждая лишняя ускоряет на ${Math.round(CFG.coop*100)}%, но ничего не строит</small>`;}
  if(el.dataset.t)return el.dataset.t;return'';}
@@ -875,7 +906,7 @@ const hp0=p=>Math.round(CFG.homeHp*hpMul(p));
 let hudT=0,warned=false;
 function drawHud(dt){hudT-=dt;if(hudT>0)return;hudT=.3;refreshDock();
  const rows=POWERS.map((p,i)=>({p,i,hp:lands(i).reduce((s,t)=>s+t.hp,0)})).sort((a,b)=>(b.i===me)-(a.i===me)||(b.i===him)-(a.i===him)||b.hp-a.hp);
-  $('plist').innerHTML=rows.map(({p,i,hp})=>`<div class="pr${hp>0?'':' dead'}" style="color:${p.color}"><i></i><span>${p.name}${i===me?'<em>ты</em>':humans.has(i)?`<em>${allied?'союзник':'игрок'}</em>`:''}</span><div class="bar"><b style="width:${Math.min(100,hp/(hp0(i)*1.6)*100)}%"></b></div></div>`).join('');
+  $('plist').innerHTML=rows.map(({p,i,hp})=>`<div class="pr${hp>0?'':' dead'}${i===me?' me':humans.has(i)?' hum':''}" style="color:${p.color}" data-t="${p.name}${i===me?' · ты':humans.has(i)?(allied?' · союзник':' · игрок'):''} · ${p.abil}"><i></i><span>${p.a3}</span><div class="bar"><b style="width:${Math.min(100,hp/(hp0(i)*1.6)*100)}%"></b></div></div>`).join('');
  const left=Math.ceil(CFG.peace-time),m=Math.floor(time/60),s=Math.floor(time%60);$('clock').textContent=left>0?`ПЕРЕМИРИЕ ${left}`:String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
  const inc=projs.filter(q=>q.T.owner===me&&q.T.alive&&team[q.owner]!==team[me]);
  const names=[...new Set(inc.map(q=>`${WPN[q.w].s} → ${q.T.name}`))];
@@ -948,6 +979,10 @@ function stepVis(dt){const inc=new Map();
   t.col.lerp(tc,Math.min(dt*2.2,1));
   const u=t.mu;u.uColor.value.set(pcol(t.owner));u.uHome.value=t.owner>=0&&t.home===t.owner?1:0;u.uCap.value=t.cap?t.cap.t/t.cap.dur:0;
   const i=inc.get(t);u.uInc.value=i?i[0]:-1;if(i)u.uIncCol.value.copy(i[1]);
+  {const on=running&&t.alive&&t.owner>=0&&t.st.pvo>0;
+   if(on){const r=pvoRange(t.owner);if(!t.dome)mkDome(t);if(t.domeR!==r)setDome(t,r);t.domeF=Math.max(0,(t.domeF||0)-dt*1.4);
+    const d=t.du;d.uCol.value.set(WCOL.pvo).lerp(tmpC.set(pcol(t.owner)),.45);d.uA.value=(team[t.owner]===team[me]?.7:.22)*Math.min(1,.4+.2*t.st.pvo);d.uF.value=t.domeF;}
+   if(t.dome)t.dome.visible=on;}
   t.marker.scale.setScalar(.2*THREE.MathUtils.clamp(camera.position.length()/3,.45,1.15));
   u.uHi.value=running&&hovW&&WPN[hovW]&&hostile(me,t)&&inReach(me,hovW,t)?1:0;}
  showRings(ringList());pushOwn();}
