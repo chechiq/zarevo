@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ЗАРЕВО</title>
+<title>БИМ БИМ БАМ БАМ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;500;800&family=Manrope:wght@500;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Unbounded:wght@300;500;800&family=Manrope:wght@500;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
 :root{--c:#3b82f6;--fg:#f8fafc;--mut:#94a3b8;--card:rgba(11,13,20,.72);--line:rgba(148,163,184,.18);--bad:#ef4444}
 *{box-sizing:border-box;user-select:none}
@@ -69,6 +69,16 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;str
 #radial .rb.off{opacity:.35;border-style:dashed}
 #radial .rb b{position:absolute;bottom:-5px;right:-5px;min-width:18px;height:18px;border-radius:9px;background:#fff;color:#000;font-size:10px;display:grid;place-items:center}
 #radial .dot{position:absolute;width:10px;height:10px;margin:-5px;border-radius:50%;border:2px solid #fff}
+#radial .manage{border-color:#fbbf24;color:#fbbf24}
+#arsenal{position:absolute;right:16px;top:50%;transform:translateY(-50%);width:min(340px,calc(100vw - 32px));max-height:65vh;overflow:auto;padding:16px;pointer-events:auto;display:none;z-index:6}
+#arsenal header{display:flex;justify-content:space-between;align-items:center;font-size:16px;font-weight:800;margin-bottom:10px}
+#arsenal select{width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;background:#121b2c;color:#fff;font:inherit}
+#arsenal p{font-size:12px;color:var(--mut);line-height:1.5;margin:10px 0}
+.arow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--line);font-size:12px}
+#arsenal button{padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-size:12px}
+#arsenal button:hover{border-color:#fbbf24;color:#fbbf24}
+#arsenal button:disabled{opacity:.35;cursor:default}
+#arsenal .arcount{color:#fde047;margin-left:auto}.arfull{color:#fbbf24!important}
 @keyframes rin{from{transform:scale(.4);opacity:0}}
 #tip{position:fixed;z-index:8;pointer-events:none;display:none;padding:9px 12px;max-width:250px;font-size:12px;line-height:1.4;border-radius:12px}
 #tip b{display:block;font-size:13px;margin-bottom:2px}#tip small{color:var(--mut);display:block;margin-top:4px}
@@ -90,6 +100,9 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;str
 .ov{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:5vh 16px 4vh;pointer-events:none;z-index:5;background:radial-gradient(ellipse at center,transparent 38%,rgba(3,5,10,.9))}
 .ov>*{pointer-events:auto}
 .ov h1{font-family:Unbounded;font-size:clamp(30px,6vw,80px);margin:0;font-weight:800;letter-spacing:.32em;margin-right:-.32em;text-shadow:0 0 50px rgba(59,130,246,.9)}
+#start h1{font-family:'Russo One',Impact,'Arial Black',sans-serif;font-size:clamp(48px,8.5vw,116px);font-weight:400;letter-spacing:.025em;margin-right:0;line-height:.94;text-align:center;transform:skewY(-3deg);background:linear-gradient(#fff8d4 4%,#ffcf56 40%,#ff731e 72%,#d62622 100%);background-clip:text;-webkit-background-clip:text;color:transparent;-webkit-text-stroke:1px rgba(255,229,162,.35);filter:drop-shadow(0 5px 0 #651717) drop-shadow(0 0 24px #f9542660);text-shadow:none}
+#roster{font-size:12px;line-height:1.6;text-align:center;color:#cbd5e1}
+#pick .chip.his{opacity:.55}
 .tag{font-size:11px;letter-spacing:.4em;color:var(--mut);margin-top:10px;text-align:center}
 .bot{display:grid;justify-items:center;gap:12px;max-width:820px}
 #pick{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
@@ -127,11 +140,12 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;str
   <div id="dock" class="card"></div>
   <div id="abil" class="card"></div>
   <div id="misc"></div>
+  <section id="arsenal" class="card" aria-label="управление арсеналом"></section>
 </div>
 <div id="radial"></div>
 <div id="tip" class="card"></div>
 <div id="start" class="ov">
-  <div><h1>ЗАРЕВО</h1><div class="tag">ДВЕНАДЦАТЬ ДЕРЖАВ · ОДНА ПЛАНЕТА</div></div>
+  <div><h1 aria-label="БИМ БИМ БАМ БАМ">БИМ БИМ<br>БАМ БАМ</h1><div class="tag">12 ДЕРЖАВ · ДО 5 ИГРОКОВ · ОДНА ПЛАНЕТА</div></div>
   <div class="bot">
     <div id="pick"></div>
     <div id="acard" class="card"></div>
@@ -142,6 +156,7 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;str
       <label><input type="checkbox" id="ally" checked> союз против ботов</label>
     </div>
     <div id="mstat"></div>
+    <div id="roster" aria-live="polite"></div>
     <button id="go">НАЧАТЬ</button>
   </div>
 </div>
@@ -182,18 +197,18 @@ const UP={
  arm:{n:'Бункеры',time:[60,100,150],desc:'−15% получаемого урона за уровень'}};
 const UK=['eco','rkt','pvo','arm'];
 const POWERS=[
- ['USA','#3b82f6','Авианосцы','дальность всего оружия +30%'],
- ['RUS','#ef4444','Мёртвая рука','МБР на уровень раньше и строится на треть быстрее'],
- ['CHN','#f59e0b','Фабрика мира','всё строится на 25% быстрее'],
- ['IND','#fb923c','Миллиард','+35% прочности всех земель'],
- ['GBR','#a78bfa','Разведка','щит сбивает на 12% чаще'],
- ['FRA','#22d3ee','Ударная сила','все ракеты бьют на 2 сильнее'],
+ ['RUS','#ef4444','Ракетный щит','МБР на уровень раньше и строится на треть быстрее'],
+ ['CHN','#f59e0b','Фабрика мира','всё оружие строится на 25% быстрее'],
+ ['USA','#3b82f6','Авианосные группы','дальность оружия +30%, морские высадки на 20% быстрее'],
+ ['KOR','#f472b6','Точная электроника','тактические ракеты и щиты строятся на 30% быстрее'],
  ['DEU','#e2e8f0','Инженерия','исследования на 30% быстрее'],
- ['JPN','#f472b6','Железный купол','4 заряда щита на старте, щит строится на 40% быстрее'],
- ['BRA','#4ade80','Глубокий тыл','захват земель вдвое быстрее'],
- ['TUR','#d9f99d','Беспилотный флот','стаи БПЛА строятся вдвое быстрее'],
- ['IRN','#2dd4bf','Рой','в стае 6 дронов, летят на 60% дальше'],
- ['AUS','#fde047','Край света','земли сами чинятся: +1 прочность каждые 12 с']
+ ['GBR','#a78bfa','Морская разведка','морские высадки на 35% быстрее, шанс перехвата +8%'],
+ ['FRA','#22d3ee','Ударная сила','все ракеты бьют на 2 сильнее'],
+ ['BRA','#4ade80','Освоение территорий','захват по суше вдвое быстрее'],
+ ['ZAF','#d9f99d','Ресурсный резерв','прочность земель +25%, на каждой земле дополнительная ячейка'],
+ ['AUS','#fde047','Океанский тыл','морские высадки на 25% быстрее, земли чинятся: +1 прочность каждые 12 с'],
+ ['IRN','#2dd4bf','Беспилотный рой','в стае 6 дронов, летят на 60% дальше и строятся на 25% быстрее'],
+ ['ISR','#fb923c','Железный купол','4 заряда щита на старте, щиты строятся на 40% быстрее, шанс перехвата +10%']
 ].map(([a3,color,abil,adesc])=>({a3,color,abil,adesc,name:''}));
 const NEUTRAL='#4b5b7d';
 const is=(p,a3)=>p>=0&&POWERS[p].a3===a3;
@@ -203,8 +218,8 @@ const ll=(lat,lon,r=1)=>{const ph=(90-lat)*Math.PI/180,th=(lon+180)*Math.PI/180;
  return new THREE.Vector3(-r*Math.sin(ph)*Math.cos(th),r*Math.cos(ph),r*Math.sin(ph)*Math.sin(th));};
 const W=window.WORLD;
 const T=W.units.map((u,i)=>({i,name:u.n,pos:ll(u.c[1],u.c[0]),owner:-1,home:-1,hp:CFG.zoneHp,maxHp:CFG.zoneHp,alive:true,cap:null,job:null,slots:CFG.zoneSlots,st:{d:0,t:0,m:0,i:0,h:0,pvo:0},burns:0,rev:0,vis:1,col:new THREE.Color(NEUTRAL),dirty:true,adj:u.adj}));
-T.forEach(t=>t.adj=t.adj.map(j=>T[j]));
-POWERS.forEach((p,k)=>{const t=T[k];p.name=t.name;p.home=t;t.owner=t.home=k;});
+T.forEach(t=>{t.adj=t.adj.map(j=>T[j]);t.sea=(W.units[t.i].sea||[]).map(j=>T[j]);});
+POWERS.forEach((p,k)=>{const t=T[W.units.findIndex(u=>u.key===p.a3)];p.name=t.name;p.home=t;t.owner=t.home=k;});
 const TW=4096,TH=2048,X=lon=>(lon+180)/360*TW,Y=lat=>(90-lat)/180*TH;
 const mkC=()=>{const c=document.createElement('canvas');c.width=TW;c.height=TH;const x=c.getContext('2d',{willReadFrequently:true});x.fillStyle='#000';x.fillRect(0,0,TW,TH);return[c,x];};
 const [idC,idX]=mkC(),[lnC,lnX]=mkC();
@@ -353,22 +368,25 @@ const lands=p=>T.filter(t=>t.alive&&t.owner===p);
 /* правила с учётом способностей стран */
 const speed=p=>(1+CFG.ecoPerLvl*PW[p].up.eco)*(is(p,'CHN')?1.25:1)*(1+time/CFG.escalate);
 const wRange=(p,w)=>WPN[w].range*(is(p,'USA')?1.3:1)*(is(p,'IRN')&&w==='d'?1.6:1);
-const wTime=(p,w)=>(w==='pvo'?CFG.pvoTime*(is(p,'JPN')?.6:1):WPN[w].time*(is(p,'RUS')&&w==='i'?.66:1)*(is(p,'TUR')&&w==='d'?.5:1))/speed(p);
+const wTime=(p,w)=>(w==='pvo'?CFG.pvoTime*(is(p,'ISR')?.6:is(p,'KOR')?.7:1):WPN[w].time*(is(p,'RUS')&&w==='i'?.66:1)*(is(p,'IRN')&&w==='d'?.75:1)*(is(p,'KOR')&&w==='t'?.7:1))/speed(p);
 const wLvl=(p,w)=>w==='pvo'?0:WPN[w].lvl-(is(p,'RUS')&&w==='i'?1:0);
 const wDmg=(p,w)=>WPN[w].dmg+(is(p,'FRA')&&w!=='d'?2:0);
 const wCount=(p,w)=>w==='d'?(is(p,'IRN')?6:4):1;
-const pvoChance=(p,w)=>Math.min(.95,(w==='d'?CFG.pvoDrone:CFG.pvoBase)+CFG.pvoPerLvl*PW[p].up.pvo+(is(p,'GBR')?.12:0));
+const pvoChance=(p,w)=>Math.min(.95,(w==='d'?CFG.pvoDrone:CFG.pvoBase)+CFG.pvoPerLvl*PW[p].up.pvo+(is(p,'GBR')?.08:is(p,'ISR')?.1:0));
 const pvoRange=p=>CFG.pvoRange+.06*PW[p].up.pvo;
 const upTime=(p,k)=>UP[k].time[PW[p].up[k]]*(is(p,'DEU')?.7:1);
 const capTime=p=>CFG.capTime*(is(p,'BRA')?.5:1);
-const hpMul=p=>is(p,'IND')?1.35:1;
+const hpMul=p=>is(p,'ZAF')?1.25:1;
+const slotBonus=p=>is(p,'ZAF')?1:0;
 const used=t=>t.st.d+t.st.t+t.st.m+t.st.i+t.st.h+t.st.pvo,free=t=>t.slots-used(t)-(t.job&&t.job.k==='b'?1:0);
 const total=(p,w)=>lands(p).reduce((a,t)=>a+t.st[w],0);
 const researching=(p,k)=>lands(p).some(t=>t.job&&t.job.k==='r'&&t.job.w===k);
 const inReach=(p,w,t)=>lands(p).some(s=>ang(s,t)<=wRange(p,w));
 const srcFor=(p,w,t)=>{let best=null,bd=wRange(p,w);for(const s of lands(p)){if(s.st[w]<=0)continue;const d=ang(s,t);if(d<=bd){bd=d;best=s;}}return best;};
 const hostile=(p,t)=>t.alive&&t.owner>=0&&team[t.owner]!==team[p];
-const canCap=(p,t)=>t.alive&&t.owner===-1&&!t.cap&&t.adj.some(a=>a.alive&&a.owner===p&&!a.job);
+const capDuration=(p,s,t)=>t.adj.includes(s)?capTime(p):(45+ang(s,t)*20)*(is(p,'GBR')?.65:is(p,'AUS')?.75:is(p,'USA')?.8:1);
+const capSources=(p,t)=>[...new Set([...t.adj,...t.sea])].filter(s=>s.alive&&s.owner===p&&!s.job).sort((a,b)=>capDuration(p,a,t)-capDuration(p,b,t));
+const canCap=(p,t)=>t.alive&&t.owner===-1&&!t.cap&&capSources(p,t).length>0;
 /* чей щит прикроет землю t: ближайшая своя или союзная земля с зарядом */
 const defender=t=>{const o=t.owner;let best=null,bd=pvoRange(o)+1e-6;for(const s of T){if(!s.alive||s.owner<0||team[s.owner]!==team[o]||s.st.pvo<=0)continue;const d=s===t?0:ang(s,t);if(d<bd){bd=d;best=s;}}return best;};
 
@@ -425,12 +443,17 @@ const FXN={
  shock:(i,o)=>{shock(T[i].pos.clone().multiplyScalar(1.014),.45,pcol(o),1.6);shock(T[i].pos.clone().multiplyScalar(1.014),.25,'#ffffff',1.1);},
  log:(m,c)=>log(m,c)};
 function fxNet(name,...a){FXN[name](...a);if(isHost())netEv.push([name,...a]);}
-function logTo(p,msg,col){if(p===me)log(msg,col);else if(isHost()&&p===him)netEv.push(['log',msg,col]);}
+function logTo(p,msg,col){if(p===me)log(msg,col);else if(isHost())for(const c of net.guests.keys())if(c.player===p&&c.open)c.send({t:'notice',msg,col});}
 
 /* ================= СНАРЯДЫ ================= */
 const SEG=120;
 function arc(a,b,t,h,out){const w=a.angleTo(b);if(w<1e-4)return out.copy(a);const s=Math.sin(w);
  out.copy(a).multiplyScalar(Math.sin((1-t)*w)/s).addScaledVector(b,Math.sin(t*w)/s);return out.normalize().multiplyScalar(1.012+h*Math.sin(Math.PI*t));}
+const seaRoutes=[];
+for(const a of T)for(const b of a.sea){if(a.i>=b.i)continue;
+ const points=Array.from({length:65},(_,i)=>arc(a.pos,b.pos,i/64,.025,new THREE.Vector3()));
+ const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),new THREE.LineDashedMaterial({color:0x38bdf8,dashSize:.018,gapSize:.012,transparent:true,opacity:.7,depthWrite:false}));
+ line.computeLineDistances();line.visible=false;scene.add(line);seaRoutes.push({a,b,line});}
 const RV=`attribute float aT;varying float vT;void main(){vT=aT;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`;
 /* хвост кометой позади снаряда + пунктир впереди: видно, куда летит */
 const RF=`uniform float uHead,uFade,uTail,uPath;uniform vec3 uCol;varying float vT;void main(){float done=step(vT,uHead);float a=smoothstep(uHead-uTail,uHead,vT)*done;
@@ -520,8 +543,14 @@ function upgrade(p,k,x,preview=false){const P=PW[p];if(!P||!P.alive||!UK.include
  const t=x||lands(p).filter(t=>!t.job).sort((a,b)=>free(a)-free(b))[0];if(!t||!t.alive||t.owner!==p||t.job)return false;if(preview)return true;
  t.job={k:'r',w:k,t:0,dur:upTime(p,k)};t.dirty=true;return true;}
 function capture(p,t,x,preview=false){const P=PW[p];if(!P||!P.alive||!t||!t.alive||t.owner!==-1||t.cap)return false;
- const s=x||t.adj.find(a=>a.alive&&a.owner===p&&!a.job);if(!s||!s.alive||s.owner!==p||s.job||!t.adj.includes(s))return false;if(preview)return true;
- s.job={k:'c',x:t.i,t:0,dur:capTime(p)};t.cap={by:p,t:0,dur:s.job.dur};s.dirty=t.dirty=true;return true;}
+ const s=x||capSources(p,t)[0];if(!s||!s.alive||s.owner!==p||s.job||(!t.adj.includes(s)&&!t.sea.includes(s)))return false;if(preview)return true;
+ s.job={k:'c',x:t.i,t:0,dur:capDuration(p,s,t)};t.cap={by:p,t:0,dur:s.job.dur};s.dirty=t.dirty=true;return true;}
+function scrap(p,t,w,preview=false){if(!PW[p]?.alive||!t||!t.alive||t.owner!==p||!BK.includes(w)||t.st[w]<=0)return false;
+ if(!preview){t.st[w]--;t.dirty=true;}return true;}
+function clearStock(p,t,preview=false){if(!PW[p]?.alive||!t||!t.alive||t.owner!==p||used(t)<=0)return false;
+ if(!preview){for(const w of BK)t.st[w]=0;t.dirty=true;}return true;}
+function cancelJob(p,t,preview=false){if(!PW[p]?.alive||!t||!t.alive||t.owner!==p||!t.job)return false;
+ if(!preview){if(t.job.k==='c'){const x=T[t.job.x];if(x?.cap?.by===p){x.cap=null;x.dirty=true;}}t.job=null;t.dirty=true;}return true;}
 function launch(p,w,s,t){const n=wCount(p,w);for(let k=0;k<n;k++)later(k*.5,()=>{if(t.alive)spawn(p,w,s,t,k);});}
 function fire(p,w,t,preview=false){const P=PW[p];if(!P||!P.alive||time<CFG.peace||!t||!hostile(p,t))return false;
  if(w==='*'){const Q=[];for(const s of lands(p))for(const w2 of WK)if(ang(s,t)<=wRange(p,w2))for(let k=0;k<s.st[w2]&&Q.length<8;k++)Q.push([s,w2]);
@@ -530,6 +559,7 @@ function fire(p,w,t,preview=false){const P=PW[p];if(!P||!P.alive||time<CFG.peace
  s.st[w]--;s.dirty=true;launch(p,w,s,t);return true;}
 function doCmd(p,m,preview=false){if(!Number.isInteger(p)||!PW[p]||!m||typeof m!=='object')return false;
  const land=v=>Number.isInteger(v)&&v>=0&&T[v]?T[v]:null,t=land(m.x),s=land(m.s);
+ if(m.c==='scrap')return scrap(p,t,m.w,preview);if(m.c==='clear')return clearStock(p,t,preview);if(m.c==='cancel')return cancelJob(p,t,preview);
  if(m.c==='buy')return build(p,m.w,s,preview);if(m.c==='up')return upgrade(p,m.w,s,preview);if(m.c==='cap')return capture(p,t,s,preview);if(m.c==='fire')return fire(p,m.w,t,preview);return false;}
 let cmdId=0;const pendingCmd=new Map();
 async function order(c,w,t,s){if(over||!running||paused)return false;const m={t:'cmd',c,w:w||'',x:t?t.i:-1,s:s?s.i:-1};
@@ -547,18 +577,18 @@ function stepWorld(dt){
   if(j.t<j.dur)continue;t.job=null;t.dirty=true;
   if(j.k==='b'){t.st[j.w]++;if(p===me)S.click();}
   else if(j.k==='r'){PW[p].up[j.w]++;logTo(p,`готово: ${UP[j.w].n} ${PW[p].up[j.w]}`,'#fde047');}
-  else{const x=T[j.x];x.cap=null;x.owner=p;x.maxHp=x.hp=Math.round(CFG.zoneHp*(x.burns?CFG.wasteHp:1)*hpMul(p));if(!x.burns)x.slots=CFG.zoneSlots;x.dirty=true;fxNet('shock',x.i,p);
+  else{const x=T[j.x];x.cap=null;x.owner=p;x.maxHp=x.hp=Math.round(CFG.zoneHp*(x.burns?CFG.wasteHp:1)*hpMul(p));x.slots=(x.burns?CFG.wasteSlots:CFG.zoneSlots)+slotBonus(p);x.dirty=true;fxNet('shock',x.i,p);
    if(humans.has(p))fxNet('log',`${POWERS[p].name} + ${x.name}`,pcol(p));}}}
 
 /* ================= БОТЫ ================= */
 function aiLand(p,L){const P=PW[p],foes=T.filter(t=>hostile(p,t));
- const nb=L.adj.filter(t=>t.alive&&t.owner===-1&&!t.cap);
+ const nb=[...new Set([...L.adj,...L.sea])].filter(t=>t.alive&&t.owner===-1&&!t.cap);
  if(nb.length&&time>25&&Math.random()<CFG.aiGrab)return capture(p,pick(nb),L);
  const res=()=>{const ks=UK.filter(k=>P.up[k]<3&&!researching(p,k));return ks.length?upgrade(p,ks.includes('rkt')&&Math.random()<.55?'rkt':pick(ks),L):false;};
  const reach=WK.filter(w=>foes.some(t=>ang(L,t)<=wRange(p,w)));
  if(free(L)<=0){if(res())return true;
   /* склад забит тем, что уже ни до кого не достаёт: списываем */
-  const junk=WK.find(w=>L.st[w]>0&&!reach.includes(w));if(junk){L.st[junk]--;L.dirty=true;}return false;}
+  const junk=WK.find(w=>L.st[w]>0&&!reach.includes(w));if(junk)scrap(p,L,junk);return false;}
  const near=foes.some(t=>ang(L,t)<1.7);
  if(L.st.pvo<(L.home===p?2:near?1:0))return build(p,'pvo',L);
  if(!lands(p).some(t=>t.job&&t.job.k==='r')&&Math.random()<.4&&res())return true;
@@ -579,7 +609,7 @@ function aiThink(p){const P=PW[p],D=CFG.diff[diff];if(!P.alive)return;
  const extra=Math.min(3,Math.floor(time/480));for(let k=1;k<=extra;k++)later(k*1.5,()=>{const w2=[...WK].reverse().find(w=>srcFor(p,w,ch[1]));if(w2)fire(p,w2,ch[1]);});
  P.atk=time+rnd(CFG.aiAttackCd)*D.tick/(1+time/900);}
 
-/* ================= СЕТЬ (двое, хост считает игру) ================= */
+/* ================= СЕТЬ (до пяти игроков, хост считает игру) ================= */
 let netAcc=0;
 function netSend(dt,force=false){if(!isHost()||!net.conn.open)return;netAcc+=dt;if(!force&&netAcc<.15)return;netAcc=0;
  net.conn.send({t:'s',time,ended:matchEnded,
@@ -597,25 +627,41 @@ function applySnap(m){time=m.time;
  for(const q of projs)if(!seen.has(q.id))killProj(q);
  for(const e of m.E)FXN[e[0]](...e.slice(1));checkEnd();if(m.ended){matchEnded=true;running=false;}}
 const mstat=t=>$('mstat').textContent=t;
-const showHis=()=>[...$('pick').children].forEach((x,j)=>x.classList.toggle('his',j===him));
+let lobbyPlayers=[];
+const roomPlayers=()=>isHost()?[me,...[...net.guests.keys()].filter(c=>c.open).map(c=>c.player)]:lobbyPlayers;
+const showHis=()=>{const players=roomPlayers();[...$('pick').children].forEach((x,j)=>x.classList.toggle('his',j!==me&&players.includes(j)));
+ $('roster').textContent=net?`игроков ${players.length} / 5 · `+players.map((p,i)=>`${POWERS[p].name}${p===me?' (ты)':''}${i===0?' ★':''}`).join(' · '):'';};
+function lobbyUpdate(){if(!isHost())return;const players=roomPlayers();him=players.find(p=>p!==me)??-1;
+ for(const c of net.guests.keys())if(c.open)c.send({t:'lobby',hp:me,you:c.player,players});showHis();mstat(`комната: ${players.length} / 5. ${players.length>1?'можно начинать или ждать остальных':'передай код друзьям'}`);}
+function createHost(){const guests=new Map();return{role:'host',guests,conn:{get open(){return[...guests.keys()].some(c=>c.open)},send(m){for(const c of guests.keys())if(c.open){try{c.send(m)}catch{netLost(c)}}}}};}
 function dropPeer(){clearTimeout(connectTimer);connectTimer=null;connecting=false;const p=netPeer;netPeer=null;if(p&&!p.destroyed)p.destroy();}
-function resetLobby(){dropPeer();him=-1;showHis();$('mcode').textContent='';
+function resetLobby(){dropPeer();him=-1;lobbyPlayers=[];showHis();$('mcode').textContent='';
  for(const id of ['go','mhost','mjoin','mjoinb','ally'])$(id).disabled=false;$('go').textContent='НАЧАТЬ';}
-function netLost(){if(!net)return;const wasGuest=isGuest();net=null;dropPeer();
+function netLost(connection){if(!net)return;
+ if(isHost()&&connection){if(!net.guests.has(connection))return;const p=connection.player;net.guests.delete(connection);
+  if(running){humans.delete(p);log(`${POWERS[p].name}: игрок вышел, управление у бота`,'#fde047');net.conn.send({t:'players',players:[...humans]});checkEnd();}
+  else if(!over)lobbyUpdate();return;}
+ const wasGuest=isGuest();net=null;dropPeer();
  for(const p of pendingCmd.values()){clearTimeout(p.timer);p.resolve(false);}pendingCmd.clear();
  if(running){if(wasGuest){over=true;matchEnded=true;running=false;closeRadial();$('hud').style.display='none';$('etitle').textContent='СВЯЗЬ';$('etext').textContent='Хост отвалился, игра остановлена.';$('end').style.display='flex';}
   else{log('друг отвалился, его державой рулит бот','#fde047');humans.delete(him);checkEnd();}}
  else if(!over){resetLobby();mstat('связь с другом потеряна');}}
-function hostData(m){
+function hostData(m,connection){
  if(!m||typeof m!=='object')return;
- if(m.t==='pick'&&!running&&!over&&Number.isInteger(m.p)&&POWERS[m.p]){if(m.p===me)net.conn.send({t:'lobby',hp:me});else{him=m.p;showHis();mstat(`друг играет за: ${POWERS[him].name}. жми НАЧАТЬ`);}}
- else if(m.t==='cmd'){const ok=!!(running&&!matchEnded&&!paused&&him>=0&&doCmd(him,m));
-  if(ok)netSend(0,true);if(Number.isInteger(m.id))net.conn.send({t:'ack',id:m.id,ok});}}
+ if(!isHost()||!connection||!net.guests.has(connection))return;
+ if(m.t==='pick'&&!running&&!over&&Number.isInteger(m.p)&&POWERS[m.p]){
+  if(m.p!==me&&![...net.guests.keys()].some(c=>c!==connection&&c.player===m.p))connection.player=m.p;lobbyUpdate();}
+ else if(m.t==='cmd'){const ok=!!(running&&!matchEnded&&!paused&&humans.has(connection.player)&&doCmd(connection.player,m));
+  if(ok)netSend(0,true);if(Number.isInteger(m.id))connection.send({t:'ack',id:m.id,ok});}}
 function guestData(m){
  if(!m||typeof m!=='object')return;
  if(m.t==='ack'){const p=pendingCmd.get(m.id);if(p){pendingCmd.delete(m.id);clearTimeout(p.timer);p.resolve(m.ok===true);}}
- else if(m.t==='lobby'&&!running&&!over&&Number.isInteger(m.hp)&&POWERS[m.hp]){him=m.hp;showHis();if(me===him)$('pick').children[(him+1)%POWERS.length].click();}
- else if(m.t==='start'&&!running&&!over&&Number.isInteger(m.gp)&&Number.isInteger(m.hp)&&POWERS[m.gp]&&POWERS[m.hp]&&m.gp!==m.hp&&CFG.diff[m.diff])startGame({me:m.gp,him:m.hp,diff:m.diff,ally:m.ally});
+ else if(m.t==='lobby'&&!running&&!over&&Number.isInteger(m.hp)&&POWERS[m.hp]&&Array.isArray(m.players)&&m.players.every(p=>Number.isInteger(p)&&POWERS[p])&&m.players.includes(m.you)){
+  him=m.hp;net.assigned=m.you;lobbyPlayers=m.players;showHis();if(me!==m.you)$('pick').children[m.you].click();showHis();mstat(`в комнате ${m.players.length} / 5. выбери свободную страну и жди хоста`);}
+ else if(m.t==='start'&&!running&&!over&&Number.isInteger(m.gp)&&Number.isInteger(m.hp)&&POWERS[m.gp]&&POWERS[m.hp]&&m.gp!==m.hp&&CFG.diff[m.diff]&&Array.isArray(m.players)&&m.players.length>=2&&m.players.length<=5&&new Set(m.players).size===m.players.length&&m.players.every(p=>Number.isInteger(p)&&POWERS[p])&&m.players.includes(m.gp)&&m.players.includes(m.hp))startGame({me:m.gp,him:m.hp,diff:m.diff,ally:m.ally,players:m.players});
+ else if(m.t==='players'&&running&&Array.isArray(m.players)&&m.players.every(p=>Number.isInteger(p)&&POWERS[p]))humans=new Set(m.players);
+ else if(m.t==='notice'&&running&&typeof m.msg==='string')log(m.msg,m.col);
+ else if(m.t==='reject'){net=null;resetLobby();mstat(m.msg||'комната недоступна');}
  else if(m.t==='pause'&&running){paused=m.v===true;$('bpause').innerHTML=paused?IC.play:IC.pause;}
  else if(m.t==='s'&&running)applySnap(m);}
 function mkPeer(id){if(!window.Peer){mstat('сетевая библиотека не загрузилась (нужен интернет)');return null;}
@@ -626,9 +672,13 @@ function mkPeer(id){if(!window.Peer){mstat('сетевая библиотека 
  p.on('error',e=>failed('сеть: '+(e.type==='peer-unavailable'?'комната с таким кодом не найдена':e.type)));return p;}
 $('mhost').onclick=()=>{if(net||netPeer||connecting||running)return;const code=Array.from({length:5},()=>pick([...'ABCDEFGHJKMNPQRSTUVWXYZ23456789'])).join('');
  const peer=mkPeer('zarevo-'+code);if(!peer)return;mstat('создаю комнату…');
- peer.on('open',()=>{if(peer!==netPeer)return;clearTimeout(connectTimer);connecting=false;$('mcode').textContent=code;mstat('скинь код другу и жди, пока он войдёт');});
- peer.on('connection',c=>{if(net||running||peer!==netPeer)return c.close();net={role:'host',conn:c};
-  c.on('open',()=>{if(net?.conn!==c)return;c.send({t:'lobby',hp:me});mstat('друг подключился, выбирает страну');});c.on('data',m=>{if(net?.conn===c)hostData(m);});c.on('close',()=>{if(net?.conn===c)netLost();});c.on('error',()=>{if(net?.conn===c)netLost();});});};
+ peer.on('open',()=>{if(peer!==netPeer)return;clearTimeout(connectTimer);connecting=false;net=createHost();$('mcode').textContent=code;lobbyUpdate();});
+ peer.on('connection',c=>{if(peer!==netPeer||!isHost())return c.close();
+  if(running||over||net.guests.size>=4){c.on('open',()=>{c.send({t:'reject',msg:running||over?'матч уже начался':'комната заполнена: максимум 5 игроков'});setTimeout(()=>c.close(),500);});return;}
+  c.player=POWERS.findIndex((_,p)=>p!==me&&![...net.guests.keys()].some(q=>q.player===p));net.guests.set(c,true);
+  const joinTimer=setTimeout(()=>{if(isHost()&&net.guests.has(c)&&!c.open){netLost(c);c.close();}},15000);
+  c.on('open',()=>{clearTimeout(joinTimer);if(peer!==netPeer||!isHost()||!net.guests.has(c))return c.close();if(running){netLost(c);return c.close();}lobbyUpdate();});
+  c.on('data',m=>hostData(m,c));c.on('close',()=>{clearTimeout(joinTimer);netLost(c);});c.on('error',()=>{clearTimeout(joinTimer);netLost(c);c.close();});});};
 $('mjoinb').onclick=()=>{if(net||netPeer||connecting||running)return;const code=$('mjoin').value.trim().toUpperCase();if(!/^[A-HJKMNP-Z2-9]{5}$/.test(code))return mstat('введи код комнаты из 5 символов');
  const peer=mkPeer();if(!peer)return;mstat('подключаюсь…');
  peer.on('open',()=>{if(peer!==netPeer||running)return;const c=peer.connect('zarevo-'+code,{reliable:true,serialization:'json'});
@@ -650,12 +700,13 @@ function buildDock(){
  $('dock').innerHTML=`<div id="en" data-t="земли без дела. Дай им приказ: строить, захватывать или исследовать"><b class="mono">0</b><small class="mono">свободно</small></div><span class="sep"></span>`
   +BK.map(w=>`<button class="wb" data-buy="${w}" aria-label="строить: ${w==='pvo'?'щит':WPN[w].n}">${IC[w]}<b class="cnt mono z">0</b><span class="lbl mono">${w==='pvo'?'ЩИТ':WPN[w].s}</span><span class="cost mono"></span></button>`).join('')
   +`<span class="sep"></span>`+UK.map(k=>`<button class="ub" data-up="${k}" aria-label="исследовать: ${UP[k].n}">${IC[k==='pvo'?'pvo':k]}<span class="pips"><i></i><i></i><i></i></span><span class="cost mono"></span></button>`).join('');
- $('misc').innerHTML=`<button class="ib" id="bhelp" aria-label="обучение" data-t="обучение заново">${IC.help}</button><button class="ib" id="bpause" aria-label="пауза" data-t="пауза (пробел)">${IC.pause}</button><button class="ib" id="bsnd" aria-label="звук" data-t="звук">${IC.snd}</button>`;
+ $('misc').innerHTML=`<button class="ib" id="bhelp" aria-label="обучение" data-t="обучение заново">${IC.help}</button><button class="ib" id="bpause" aria-label="пауза" data-t="пауза (пробел)">${IC.pause}</button><button class="ib" id="bsnd" aria-label="звук" data-t="звук">${IC.snd}</button><button class="ib" id="bmanage" style="width:auto;padding:0 12px;font-size:12px;color:#fde047" data-t="списать оружие, освободить ячейки или отменить дело">арсенал</button>`;
+ $('bmanage').onclick=()=>openArsenal();
  $('bpause').onclick=()=>{if(isGuest())return;paused=!paused;$('bpause').innerHTML=paused?IC.play:IC.pause;if(isHost())net.conn.send({t:'pause',v:paused});};
  $('bsnd').onclick=()=>{mute=!mute;if(master)master.gain.value=mute?0:.8;$('bsnd').innerHTML=mute?IC.mute:IC.snd;};
  $('bhelp').onclick=()=>{tut.step=0;tut.on=true;showCoach();};}
 function refreshDock(){if(!running)return;const P=PW[me],mine=lands(me),idle=mine.filter(t=>!t.job),room=idle.some(t=>free(t)>0);
- $('en').firstChild.textContent=idle.length;$('en').classList.toggle('hot',idle.length>0);
+ $('en').firstChild.textContent=idle.length;$('en').classList.toggle('hot',idle.length>0);refreshArsenal();
  document.querySelectorAll('.wb').forEach(b=>{const w=b.dataset.buy,n=total(me,w),lock=P.up.rkt<wLvl(me,w),run=mine.some(t=>t.job&&t.job.k==='b'&&t.job.w===w);
   b.querySelector('.cnt').textContent=n;b.querySelector('.cnt').classList.toggle('z',!n);b.querySelector('.cost').textContent=lock?'закрыто':Math.round(wTime(me,w))+'с';
   b.classList.toggle('lock',lock);b.classList.toggle('off',lock||!room);b.classList.toggle('run',run);});
@@ -673,7 +724,24 @@ document.addEventListener('mouseover',e=>{const el=e.target.closest('[data-buy],
 let hovW=null;
 $('dock').addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;
  const ok=await(b.dataset.buy?order('buy',b.dataset.buy):order('up',b.dataset.up));if(ok){S.buy();tutEvent(b.dataset.buy?(b.dataset.buy==='pvo'?'pvo':'buy'):'up');}
- else{S.no();if(!lands(me).some(t=>!t.job))log('все земли заняты делом, подожди','#fde047');else if(b.dataset.buy&&PW[me].up.rkt>=wLvl(me,b.dataset.buy))log('нет свободных ячеек: стреляй или захватывай земли','#fde047');}});
+ else{S.no();if(!lands(me).some(t=>!t.job))log('все земли заняты: в арсенале можно отменить дело','#fde047');else if(b.dataset.buy&&PW[me].up.rkt>=wLvl(me,b.dataset.buy)){log('склад полон: открой арсенал и спиши ненужное','#fde047');openArsenal(lands(me).find(t=>free(t)<=0));}}});
+
+let arsenalLand=-1,arsenalKey='';
+function closeArsenal(){$('arsenal').style.display='none';}
+function openArsenal(t){closeRadial();arsenalLand=(t||lands(me).find(t=>free(t)<=0)||lands(me)[0])?.i??-1;arsenalKey='';$('arsenal').style.display='block';refreshArsenal();}
+function refreshArsenal(){const panel=$('arsenal');if(panel.style.display!=='block')return;
+ const mine=lands(me),t=T[arsenalLand];if(!running||over||!t||!t.alive||t.owner!==me){closeArsenal();return;}
+ const key=[t.i,...BK.map(w=>t.st[w]),t.job?.k,t.job?.w,t.job?.x,Math.ceil((t.job?.dur||0)-(t.job?.t||0)),...Object.values(PW[me].up),paused,...mine.map(s=>s.i)].join('|');
+ if(key===arsenalKey||document.activeElement?.id==='arsenal-select')return;arsenalKey=key;
+ panel.innerHTML=`<header>арсенал <button data-ar="close" aria-label="закрыть арсенал">✕</button></header><select id="arsenal-select" aria-label="твоя территория">${mine.map(s=>`<option value="${s.i}"${s===t?' selected':''}>${s.name} · ${free(s)} своб.</option>`).join('')}</select>
+ <p class="${free(t)<=0?'arfull':''}">ячейки: ${used(t)} / ${t.slots}${t.job?.k==='b'?' · 1 строится':''} · свободно ${free(t)}</p>
+ ${t.job?`<div class="arow"><span>${jobTxt(t)}</span><button data-ar="cancel">отменить</button></div>`:'<p>территория свободна для нового дела</p>'}
+ ${BK.map(w=>`<div class="arow"><span>${w==='pvo'?'щит':WPN[w].s}</span><b class="arcount">${t.st[w]}</b><button data-ar="buy" data-weapon="${w}" ${t.job||free(t)<=0||PW[me].up.rkt<wLvl(me,w)?'disabled':''} aria-label="строить ${w==='pvo'?'щит':WPN[w].n}">+ ${Math.round(wTime(me,w))}с</button><button data-ar="scrap" data-weapon="${w}" ${t.st[w]<=0?'disabled':''} aria-label="списать ${w==='pvo'?'щит':WPN[w].n}">−1</button></div>`).join('')}
+ <p>списание сразу освобождает ячейки. отмена останавливает производство, исследование или высадку; прогресс теряется.</p><button data-ar="clear" ${used(t)<=0?'disabled':''}>очистить склад этой земли</button>`;
+}
+$('arsenal').addEventListener('change',e=>{if(e.target.id==='arsenal-select'){arsenalLand=Number(e.target.value);arsenalKey='';e.target.blur();refreshArsenal();}});
+$('arsenal').addEventListener('click',async e=>{const b=e.target.closest('[data-ar]');if(!b||b.disabled)return;const c=b.dataset.ar;if(c==='close')return closeArsenal();
+ const t=T[arsenalLand];b.disabled=true;const ok=await order(c,b.dataset.weapon,c==='buy'?null:t,c==='buy'?t:null);if(ok){S.click();if(c==='buy')tutEvent(b.dataset.weapon==='pvo'?'pvo':'buy');}else S.no();arsenalKey='';refreshArsenal();});
 
 /* --- круговое меню: кликнул по земле, выбрал чем --- */
 let radT=null;
@@ -685,11 +753,10 @@ function openRadial(t,x,y){const R=$('radial'),P=PW[me];let items=[];
    return{c:'fire',w,off:!n,n:n||total(me,w),tip:`${WPN[w].n}: ${n?'урон '+wDmg(me,w)+(w==='d'?' × '+wCount(me,w):''):'отсюда не достаёт'}`};});
   if(!items.length){log('нечем стрелять: построй оружие','#fde047');S.no();pulse('.wb[data-buy="t"]');return;}
   const all=items.reduce((a,i)=>a+(i.off?0:i.n),0);if(all>1)items.push({c:'fire',w:'*',n:Math.min(all,8),tip:'залп: всё, что достаёт'});}
- else if(t.owner===me){if(t.job){log(`${t.name} ${jobTxt(t)}`,'#fde047');return closeRadial();}
-  items=BK.map(w=>{const lock=P.up.rkt<wLvl(me,w),full=free(t)<=0;return{c:'buy',w,off:lock||full,n:Math.round(wTime(me,w)),tip:`${w==='pvo'?'Щит':WPN[w].n}: ${lock?'нужна ракетная программа '+wLvl(me,w):full?'все ячейки заняты':'строить '+Math.round(wTime(me,w))+' с'}`};});}
- else if(t.owner===-1&&t.alive){const adj=t.adj.some(a=>a.alive&&a.owner===me);
+ else if(t.owner===me)return openArsenal(t);
+ else if(t.owner===-1&&t.alive){const sources=capSources(me,t),s=sources[0],sea=s&&!t.adj.includes(s);
   if(t.cap){log(t.cap.by===me?'уже захватываешь':'эту землю уже забирают','#fde047');return;}
-  items=[{c:'cap',off:!canCap(me,t),n:Math.round(capTime(me)),tip:!adj?'захватить можно только землю рядом с твоей':!canCap(me,t)?'соседняя земля занята делом, подожди':`захватить ${t.name}: ${Math.round(capTime(me))} с`}];}
+  items=[{c:'cap',off:!canCap(me,t),n:s?Math.ceil(capDuration(me,s,t)):'—',tip:!s?'нужна свободная своя земля у сухопутной или морской границы':`${sea?'морская высадка':'захват'}: ${t.name} · из ${s.name} · ${Math.ceil(capDuration(me,s,t))} с`}];}
  else return closeRadial();
  radT=t;R.style.display='block';R.style.transform=`translate(${x}px,${y}px)`;
  const n=items.length,sp=n>1?Math.min(40,170/(n-1)):0;
@@ -704,10 +771,11 @@ const pulse=sel=>{const el=document.querySelector(sel);if(!el)return;el.classLis
 const TUT=[
  {t:'Это твоя держава. Точки под землёй: ячейки под оружие и щит.',next:true},
  {t:'Нажми на ракету внизу: свободная земля начнёт её строить.',on:'buy',hl:'.wb[data-buy="t"]'},
- {t:'Кликни по серой земле у своей границы и забери её.',on:'cap'},
+ {t:'Кликни по серой земле у сухопутной или морской границы. Голубой пунктир — маршрут высадки.',on:'cap'},
  {t:'Кликни по своей земле и поставь в неё щит. Он сам сбивает то, что летит рядом.',on:'pvo'},
  {t:'Когда кончится перемирие: клик по врагу, потом выбери оружие.',on:'fire'},
- {t:'Справа исследования. Они открывают дальние ракеты.',on:'up',hl:'.ub[data-up="rkt"]'}];
+ {t:'Справа исследования. Они открывают дальние ракеты.',on:'up',hl:'.ub[data-up="rkt"]'},
+ {t:'Склад забит? Кликни по своей земле или нажми «арсенал»: списывай оружие кнопкой −1, отменяй дела.',next:true}];
 const tut={step:0,on:false};
 function showCoach(){const c=$('coach');document.querySelectorAll('.pulse').forEach(x=>x.classList.remove('pulse'));
  if(!tut.on||tut.step>=TUT.length){c.style.display='none';tut.on=false;try{localStorage.setItem('zarevo_tut','1');}catch(e){}return;}
@@ -716,10 +784,10 @@ function showCoach(){const c=$('coach');document.querySelectorAll('.pulse').forE
 function tutEvent(name){if(tut.on&&TUT[tut.step]&&TUT[tut.step].on===name){tut.step++;showCoach();}}
 $('cnext').onclick=()=>{tut.step++;showCoach();};$('cskip').onclick=()=>{tut.on=false;showCoach();};
 
-addEventListener('keydown',async e=>{if(!running||e.target.tagName==='INPUT')return;const k=e.code,n='123456'.indexOf(e.key);
+addEventListener('keydown',async e=>{if(!running||['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName))return;const k=e.code,n='123456'.indexOf(e.key);
  if(n>=0&&n<5&&hov&&hostile(me,hov)){if(await order('fire',WK[n],hov)){S.click();tutEvent('fire');}else S.no();}
  else if(n>=0&&hov&&hov.owner===me){if(await order('buy',BK[n],null,hov)){S.buy();tutEvent(n===5?'pvo':'buy');}else S.no();}
- else if(k==='Escape')closeRadial();else if(k==='Space'){e.preventDefault();$('bpause').onclick();}});
+ else if(k==='Escape'){closeRadial();closeArsenal();}else if(k==='Space'){e.preventDefault();$('bpause').onclick();}});
 const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
 function landAt(x,y){mouse.set(x/innerWidth*2-1,-(y/innerHeight)*2+1);ray.setFromCamera(mouse,camera);const h=ray.intersectObject(globe)[0];if(!h)return null;
  const s=slotAt(h.uv.x,h.uv.y);return s>0&&s<255?T[s-1]:null;}
@@ -751,7 +819,7 @@ const hp0=p=>Math.round(CFG.homeHp*hpMul(p));
 let hudT=0,warned=false;
 function drawHud(dt){hudT-=dt;if(hudT>0)return;hudT=.3;refreshDock();
  const rows=POWERS.map((p,i)=>({p,i,hp:lands(i).reduce((s,t)=>s+t.hp,0)})).sort((a,b)=>(b.i===me)-(a.i===me)||(b.i===him)-(a.i===him)||b.hp-a.hp);
- $('plist').innerHTML=rows.map(({p,i,hp})=>`<div class="pr${hp>0?'':' dead'}" style="color:${p.color}"><i></i><span>${p.name}${i===me?'<em>ты</em>':i===him?`<em>${allied?'союзник':'друг'}</em>`:''}</span><div class="bar"><b style="width:${Math.min(100,hp/(hp0(i)*1.6)*100)}%"></b></div></div>`).join('');
+  $('plist').innerHTML=rows.map(({p,i,hp})=>`<div class="pr${hp>0?'':' dead'}" style="color:${p.color}"><i></i><span>${p.name}${i===me?'<em>ты</em>':humans.has(i)?`<em>${allied?'союзник':'игрок'}</em>`:''}</span><div class="bar"><b style="width:${Math.min(100,hp/(hp0(i)*1.6)*100)}%"></b></div></div>`).join('');
  const left=Math.ceil(CFG.peace-time),m=Math.floor(time/60),s=Math.floor(time%60);$('clock').textContent=left>0?`ПЕРЕМИРИЕ ${left}`:String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
  const inc=projs.filter(q=>q.T.owner===me&&q.T.alive&&team[q.owner]!==team[me]);
  const names=[...new Set(inc.map(q=>`${WPN[q.w].s} → ${q.T.name}`))];
@@ -770,26 +838,28 @@ $('again').onclick=()=>location.reload();
 
 /* --- стартовый экран --- */
 POWERS.forEach((p,i)=>{const b=document.createElement('button');b.className='chip';b.innerHTML=`<i></i>${p.name}`;b.style.setProperty('--pc',p.color);
- b.onclick=()=>{if(running)return;if(net&&i===him)return mstat('эту страну уже занял друг');
+ b.onclick=()=>{if(running)return;if(net&&i!==me&&(roomPlayers().includes(i)||(isHost()&&[...net.guests.keys()].some(c=>c.player===i)))&&!(isGuest()&&net.assigned===i))return mstat('эта страна уже занята игроком');
   me=i;[...$('pick').children].forEach((x,j)=>x.classList.toggle('sel',j===i));GU.uHov.value=p.home.i+1;flyTo(p.home.pos,3.1);
   $('acard').innerHTML=`<span style="color:${p.color}">${IC.star}</span><div><b>${p.abil}</b><span>${p.adesc}</span></div>`;
-  if(isHost())net.conn.send({t:'lobby',hp:me});else if(isGuest())net.conn.send({t:'pick',p:me});};$('pick').appendChild(b);});
-$('opts').innerHTML=CFG.diff.map((d,i)=>`<button class="chip dch${i===1?' sel':''}" style="--pc:#fff" data-d="${i}">${d.n}</button>`).join('')+'<span class="sep" style="height:24px"></span><button class="chip" id="mpb" style="--pc:#fde047">с другом</button>';
+  if(isHost())lobbyUpdate();else if(isGuest())net.conn.send({t:'pick',p:me});};$('pick').appendChild(b);});
+$('opts').innerHTML=CFG.diff.map((d,i)=>`<button class="chip dch${i===1?' sel':''}" style="--pc:#fff" data-d="${i}">${d.n}</button>`).join('')+'<span class="sep" style="height:24px"></span><button class="chip" id="mpb" style="--pc:#fde047">с друзьями · до 5</button>';
 $('opts').addEventListener('click',e=>{const b=e.target.closest('.dch');if(b){diff=+b.dataset.d;document.querySelectorAll('.dch').forEach(x=>x.classList.toggle('sel',x===b));}
  if(e.target.closest('#mpb'))$('mp').style.display=$('mp').style.display==='flex'?'none':'flex';});
 let fly=null;
 function flyTo(pos,dist){fly={from:camera.position.clone(),to:pos.clone().normalize().multiplyScalar(dist),t:0};zoomT=dist;controls.autoRotate=false;}
-function startGame(c){au().resume();me=c.me;him=c.him;diff=c.diff;allied=c.ally&&him>=0;humans=new Set([me]);if(him>=0)humans.add(him);
+function startGame(c){au().resume();me=c.me;him=c.him;diff=c.diff;humans=new Set(c.players||[me,...(him>=0?[him]:[])]);allied=c.ally&&humans.size>1;
  team=POWERS.map((_,i)=>allied&&humans.has(i)?99:i);
- POWERS.forEach((_,p)=>{const P=PW[p],h=POWERS[p].home;h.maxHp=h.hp=hp0(p);h.slots=CFG.homeSlots;h.st.t=1;h.st.pvo=is(p,'JPN')?4:2;});T.forEach(t=>t.dirty=true);
+ POWERS.forEach((_,p)=>{const P=PW[p],h=POWERS[p].home;h.maxHp=h.hp=hp0(p);h.slots=CFG.homeSlots+slotBonus(p);h.st.t=1;h.st.pvo=is(p,'ISR')?4:2;});T.forEach(t=>t.dirty=true);
  running=true;$('start').style.display='none';$('hud').style.display='block';GU.uHov.value=-1;buildDock();
  document.documentElement.style.setProperty('--c',POWERS[me].color);$('abil').innerHTML=`${IC.star}<span>${POWERS[me].abil}</span>`;$('abil').dataset.t=POWERS[me].adesc;
  flyTo(POWERS[me].home.pos,2.5);refreshDock();
  let seen=false;try{seen=localStorage.getItem('zarevo_tut');}catch(e){}tut.on=!seen;tut.step=0;showCoach();}
-$('go').onclick=()=>{if(isGuest()||running)return;const ally=$('ally').checked;
- if(isHost()){if(him<0)return mstat('друг ещё не вошёл');net.conn.send({t:'start',hp:me,gp:him,diff,ally});}
+function startMatch(){if(isGuest()||running)return;const ally=$('ally').checked;
+ const players=isHost()?roomPlayers():[me];
+ if(isHost()){if(players.length<2)return mstat('пока никто не подключился');for(const c of net.guests.keys())if(c.open)c.send({t:'start',hp:me,gp:c.player,diff,ally,players});}
  else if(netPeer){dropPeer();resetLobby();}
- startGame({me,him:isHost()?him:-1,diff,ally});};
+ startGame({me,him:isHost()?him:-1,diff,ally,players});}
+$('go').onclick=startMatch;
 $('pick').children[0].click();
 
 /* ================= ЦИКЛ ================= */
@@ -800,6 +870,8 @@ function sim(dt){if(!running||paused||matchEnded)return;time+=dt;
  checkEnd();netSend(dt,matchEnded);}
 const neutralC=new THREE.Color(NEUTRAL);
 function stepVis(dt){const inc=new Map();
+ for(const {a,b,line} of seaRoutes){const owns=a.owner===me||b.owner===me,active=(a.job?.k==='c'&&a.job.x===b.i)||(b.job?.k==='c'&&b.job.x===a.i);
+  line.visible=!!(running&&!over&&a.alive&&b.alive&&owns&&(active||hov===a||hov===b||radT===a||radT===b));}
  for(const q of projs){if(q.dead)continue;const r=1-Math.min(q.t,1),c=inc.get(q.T);if(!c||r<c[0])inc.set(q.T,[r,q.col]);}
  for(const t of T){t.vis+=((t.alive?t.hp/t.maxHp*(t.burns&&t.owner<0?.6:1):0)-t.vis)*Math.min(dt*1.5,1);
   if(isGuest()){if(t.cap)t.cap.t=Math.min(t.cap.t+dt,t.cap.dur);if(t.job)t.job.t=Math.min(t.job.t+dt,t.job.dur);}
@@ -831,7 +903,7 @@ function tick(raw){GU.uTime.value+=raw;
  composer.render();}
 stepVis(1);frame();
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight);pmat.uniforms.uPx.value=innerHeight*PR;});
-window.__g={CFG,UP,tick,sim,order,build,fire,capture,upgrade,aiThink,free,total,doCmd,camera,T,PW,projs,POWERS,WPN,get humans(){return humans},spawn,nuke,get time(){return time},get net(){return net},get me(){return me},get him(){return him},get running(){return running},get over(){return over},get team(){return team}};
+window.__g={CFG,UP,tick,sim,order,build,fire,capture,upgrade,scrap,clearStock,cancelJob,capSources,capDuration,openArsenal,seaRoutes,aiThink,free,total,doCmd,camera,T,PW,projs,POWERS,WPN,get humans(){return humans},spawn,nuke,get time(){return time},get net(){return net},get me(){return me},get him(){return him},get running(){return running},get over(){return over},get team(){return team}};
 </script>
 </body>
 </html>
