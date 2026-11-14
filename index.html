@@ -103,7 +103,7 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;str
 .lab.idle .sl{border-color:#fde047;animation:idl .8s infinite alternate}
 @keyframes idl{to{border-color:transparent}}
 .lab.zone .n{display:none}.lab.zone.show .n,#labels.near .lab.zone .n{display:block}.lab.zone .hb{width:36px}
-#labels.far .lab.zone .hb,#labels.far .lab .sl i{display:none}
+#labels.far .lab.zone .hb,#labels.far .lab .sl i,#labels.far .lab .sl.emp{display:none!important}
 .bdg{font-family:Unbounded;font-weight:800;font-size:15px;color:#05070d;padding:7px 11px;border-radius:10px;white-space:nowrap;box-shadow:0 0 18px currentColor}
 #abil .bdg{font-size:12px;padding:5px 8px}
 #flash{position:fixed;inset:0;background:radial-gradient(circle,#fff,#ff9a3a);opacity:0;pointer-events:none;mix-blend-mode:screen}
@@ -631,7 +631,7 @@ async function order(c,w,t,s){if(over||!running||paused)return false;const m={t:
  const ok=doCmd(me,m);refreshDock();return ok;}
 function stepWorld(dt){
  POWERS.forEach((_,p)=>{const P=PW[p];if(!P.alive)return;
-  if(is(p,'AUS')){P.regen+=dt;if(P.regen>=12){P.regen=0;for(const t of lands(p))if(t.hp<t.maxHp){t.hp=Math.min(t.maxHp,t.hp+1);t.dirty=true;}}}});
+  if(is(p,'AUS')){P.regen+=dt;if(P.regen>=20){P.regen=0;for(const t of lands(p))if(t.hp<t.maxHp){t.hp=Math.min(t.maxHp,t.hp+1);t.dirty=true;}}}});
  for(const t of T){
   if(!t.alive){if(t.rev>0){t.rev-=dt;if(t.rev<=0&&t.burns<2){t.alive=true;t.owner=-1;t.maxHp=t.hp=Math.round(CFG.zoneHp*CFG.wasteHp);t.slots=CFG.wasteSlots;t.marker.visible=true;t.dirty=true;}}continue;}
   const j=t.job;if(!j)continue;const p=t.owner;j.t+=j.k==='r'?dt*(1+CFG.coop*(resLands(p,j.w).length-1)):dt;
@@ -812,10 +812,13 @@ $('arsenal').addEventListener('click',async e=>{const b=e.target.closest('[data-
  const t=T[arsenalLand];b.disabled=true;const ok=await order(c,b.dataset.weapon,c==='buy'?null:t,c==='buy'?t:null);if(ok){S.click();if(c==='buy')tutEvent(b.dataset.weapon==='pvo'?'pvo':'buy');}else S.no();arsenalKey='';refreshArsenal();});
 
 /* --- круговое меню: кликнул по земле, выбрал чем --- */
-let radT=null;
+let radT=null,radKey='';
+const rkey=t=>[t.owner,t.alive,t.job?.k,t.job?.w,used(t),t.slots,...Object.values(PW[me].up)].join();
 function closeRadial(){$('radial').style.display='none';radT=null;}
 const jobTxt=t=>{const j=t.job;return(j.k==='b'?'строит: '+(j.w==='pvo'?'щит':WPN[j.w].n):j.k==='r'?'исследует: '+UP[j.w].n:'захватывает: '+T[j.x].name)+`, ещё ${Math.ceil(j.dur-j.t)} с`;};
-function placeRadial(){if(!radT)return;pv3.copy(radT.pos).multiplyScalar(1.014);if(!radT.alive||pv3.dot(camera.position)/camera.position.length()<.2)return closeRadial();
+function placeRadial(){if(!radT)return;
+ /* склад или дело земли изменились, пока меню открыто: перерисовать, если мышь не на кнопках */
+ if(rkey(radT)!==radKey&&!$('radial').matches(':hover')){const t=radT;if(t.owner===me)openRadial(t);else if(t.owner!==-1&&!hostile(me,t))closeRadial();else radKey=rkey(t);if(!radT)return;}pv3.copy(radT.pos).multiplyScalar(1.014);if(!radT.alive||pv3.dot(camera.position)/camera.position.length()<.2)return closeRadial();
  pv3.project(camera);$('radial').style.transform=`translate(${((pv3.x+1)/2*innerWidth).toFixed(1)}px,${((1-pv3.y)/2*innerHeight).toFixed(1)}px)`;}
 function openRadial(t){const R=$('radial'),P=PW[me];let items=[];
  if(hostile(me,t)){if(time<CFG.peace){log('перемирие: стрелять пока нельзя','#fde047');S.no();return;}
@@ -834,9 +837,9 @@ function openRadial(t){const R=$('radial'),P=PW[me];let items=[];
   if(t.cap){log(t.cap.by===me?'уже захватываешь':'эту землю уже забирают','#fde047');return;}
   const src=capSources(me,t).slice(0,3);
   items=src.length?src.map(s=>{const d=Math.ceil(capDuration(me,s,t));return{c:'cap',s:s.i,n:d,tip:`${t.adj.includes(s)?'захват':'морская высадка'}: ${t.name} · из ${s.name} · ${d} с`};})
-   :[{c:'cap',off:true,n:'—',tip:'нужна свободная своя земля у сухопутной или морской границы'}];}
+   :[{c:'cap',off:true,n:'—',tip:[...t.adj,...t.sea].some(s=>s.alive&&s.owner===me)?'твоя земля у границы занята делом: дождись конца или отмени его':'далеко: нужна своя земля у сухопутной или морской границы'}];}
  else return closeRadial();
- radT=t;R.style.display='block';placeRadial();if(!radT)return;
+ radT=t;radKey=rkey(t);R.style.display='block';placeRadial();if(!radT)return;
  const n=items.length,ring=n>=5,rad=ring?Math.max(96,n*60/6.283):84,sp=ring?360/n:n>1?Math.min(44,170/(n-1)):0;
  R.innerHTML=`<i class="ring" style="width:${rad*2}px;height:${rad*2}px;margin:${-rad}px"></i><i class="dot"></i>`+items.map((it,k)=>{const a=(-90+(ring?k:k-(n-1)/2)*sp)*Math.PI/180,rx=Math.cos(a)*rad,ry=Math.sin(a)*rad;
   return`<button class="rb${it.c==='fire'?'':' cap'}${it.cls?' '+it.cls:''}${it.off?' off':''}" style="left:${rx.toFixed(1)}px;top:${ry.toFixed(1)}px;animation-delay:${k*22}ms${it.col?';color:'+it.col:''}" data-c="${it.c}" data-w="${it.w||''}" data-s="${it.s??-1}" data-t="${it.tip}" aria-label="${it.tip}">${IC[it.ic||(it.c==='cap'?'cap':it.w==='*'?'all':it.w)]}<b class="mono">${it.n}</b></button>`;}).join('');}
@@ -851,7 +854,7 @@ const pulse=sel=>{const el=document.querySelector(sel);if(!el)return;el.classLis
 const TUT=[
  {t:'Это твоя держава. Значки под землёй: что лежит на складе. Пустые квадраты: свободные ячейки.',next:true},
  {t:'Нажми на ракету внизу: свободная земля начнёт её строить.',on:'buy',hl:'.wb[data-buy="t"]'},
- {t:'Кликни по серой земле у сухопутной или морской границы. Голубой пунктир — маршрут высадки.',on:'cap'},
+ {t:'Земля делает одно дело за раз. Когда ракета достроится, кликни по серой земле рядом и захвати её.',on:'cap'},
  {t:'Кликни по своей земле и поставь в неё щит. Он сам сбивает то, что летит рядом.',on:'pvo'},
  {t:'Когда кончится перемирие: клик по врагу, потом выбери оружие.',on:'fire'},
  {t:'Справа исследования. Жми ещё раз, чтобы подключить вторую и третью землю: пойдёт быстрее.',on:'up',hl:'.ub[data-up="rkt"]'},
@@ -891,7 +894,7 @@ function drawLabels(){camera.updateMatrixWorld();cdir.copy(camera.position).norm
    L.children[1].style.display=own?'':'none';L.children[1].firstChild.style.width=Math.max(0,t.hp/t.maxHp*100)+'%';
    const sl=L.children[2];sl.style.display=mine?'':'none';
    /* склад: значок оружия и сколько его лежит, пустые квадраты — свободные ячейки */
-   if(mine){let h='';for(const w of BK)if(t.st[w])h+=`<span class="k" style="color:${WCOL[w]}">${IC[w]}${t.st[w]}</span>`;sl.innerHTML=h+'<i></i>'.repeat(Math.max(0,free(t)));}}
+   if(mine){let h='';for(const w of BK)if(t.st[w])h+=`<span class="k" style="color:${WCOL[w]}">${IC[w]}${t.st[w]}</span>`;sl.innerHTML=h+'<i></i>'.repeat(Math.max(0,free(t)));sl.classList.toggle('emp',!h);}}
   const jb=L.children[3],j=mine&&t.job?t.job:null,cp=!j&&running&&t.cap&&team[t.cap.by]===team[me]?t.cap:null,jk=j?j.k+(j.w||''):cp?'cap':'';
   if(L._jk!==jk){L._jk=jk;L._jp=L._js=null;jb.style.display=jk?'':'none';
    if(jk){const ji=jb.firstChild;ji.innerHTML=j&&j.k==='b'?IC[j.w]:j&&j.k==='r'?IC[j.w==='pvo'?'rad':j.w]:IC.cap;ji.style.color=j&&j.k==='b'?WCOL[j.w]:'';}}
