@@ -19,12 +19,12 @@ svg.ic.f{fill:currentColor;stroke:none}
 svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 #hud{position:fixed;inset:0;pointer-events:none;display:none}
 /* список держав */
-#plist{position:absolute;left:16px;top:16px;padding:8px 10px;display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;width:176px;pointer-events:auto}
-.pr{display:grid;grid-template-columns:7px 28px 1fr;align-items:center;gap:5px;font:700 10px 'JetBrains Mono',monospace}
-.pr i{width:7px;height:7px;border-radius:50%;background:currentColor}
+#plist{position:absolute;left:16px;top:16px;padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:9px 18px;width:290px;pointer-events:auto}
+.pr{display:grid;grid-template-columns:10px 38px 1fr;align-items:center;gap:7px;font:700 14px 'JetBrains Mono',monospace}
+.pr i{width:10px;height:10px;border-radius:50%;background:currentColor}
 .pr span{color:var(--mut)}
 .pr.me span{color:#fff}.pr.hum span{color:#fde047}
-.pr .bar{height:5px;border-radius:3px;background:rgba(148,163,184,.18);overflow:hidden}
+.pr .bar{height:8px;border-radius:4px;background:rgba(148,163,184,.18);overflow:hidden}
 .pr .bar b{display:block;height:100%;background:currentColor;transition:width .4s}
 .pr.dead{opacity:.28}.pr.dead span{text-decoration:line-through}
 #top{position:absolute;left:50%;top:14px;transform:translateX(-50%);text-align:center}
@@ -57,6 +57,7 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;str
 #misc{position:absolute;left:16px;bottom:16px;display:flex;gap:6px}
 .ib{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;color:var(--mut);transition:.15s}
 .ib:hover{color:#fff;border-color:#fff}
+.ib.on{background:rgba(56,189,248,.22);border-color:#38bdf8}
 /* подсказка-обучение */
 #coach{position:absolute;left:50%;bottom:108px;transform:translateX(-50%);padding:10px 12px 10px 16px;display:none;align-items:center;gap:12px;font-size:13px;font-weight:700;pointer-events:auto;border-color:rgba(253,224,71,.5);max-width:min(560px,90vw)}
 #coach .n{color:#fde047;font-size:11px}
@@ -244,14 +245,43 @@ function fillPath(x,poly){x.beginPath();for(const ring of poly){for(let i=0;i<ri
 const drawC=(g,slot)=>{for(const poly of g){idX.fillStyle=idX.strokeStyle=`rgb(${slot},255,0)`;idX.lineWidth=2.6;idX.lineJoin='round';fillPath(idX,poly);idX.fill('evenodd');idX.stroke();
  lnX.fillStyle='rgb(255,0,0)';fillPath(lnX,poly);lnX.fill('evenodd');}};
 W.countries.forEach(c=>drawC(c.g,c.u+1));drawC(W.extra,0);
-const slotMap=new Uint8Array(TW*TH);
-{const d=idX.getImageData(0,0,TW,TH).data;for(let i=0;i<TW*TH;i++)slotMap[i]=d[i*4+1]>128?d[i*4]:255;
+const slotMap=new Uint8Array(TW*TH),coreMap=new Uint8Array(TW*TH).fill(255);
+/* точная заливка земель по строкам. canvas сглаживает края, и на кромке выходили пиксели с чужим номером земли: клик по берегу мог выбрать не ту страну */
+function scanFill(poly,slot){let y0=TH,y1=-1;
+ for(const ring of poly)for(let i=1;i<ring.length;i+=2){const py=Y(ring[i]);if(py<y0)y0=py;if(py>y1)y1=py;}
+ y0=Math.max(0,Math.ceil(y0-.5));y1=Math.min(TH-1,Math.ceil(y1-.5)-1);if(y1<y0)return;
+ const rows=[];for(let y=y0;y<=y1;y++)rows.push([]);
+ for(const ring of poly){const n=ring.length;for(let i=0;i<n;i+=2){const j=(i+2)%n;let ax=X(ring[i]),ay=Y(ring[i+1]),bx=X(ring[j]),by=Y(ring[j+1]);if(ay===by)continue;
+   if(ay>by){const tx=ax,ty=ay;ax=bx;ay=by;bx=tx;by=ty;}
+   const k=(bx-ax)/(by-ay);for(let y=Math.max(y0,Math.ceil(ay-.5)),e=Math.min(y1,Math.ceil(by-.5)-1);y<=e;y++)rows[y-y0].push(ax+(y+.5-ay)*k);}}
+ rows.forEach((r,q)=>{r.sort((m,n)=>m-n);const o=(q+y0)*TW;
+  for(let i=0;i+1<r.length;i+=2)for(let x=Math.max(0,Math.ceil(r[i]-.5)),e=Math.min(TW-1,Math.ceil(r[i+1]-.5)-1);x<=e;x++)coreMap[o+x]=slot;});}
+W.countries.forEach(c=>c.g.forEach(poly=>scanFill(poly,c.u+1)));W.extra.forEach(poly=>scanFill(poly,0));
+{const N=TW*TH,idIm=idX.getImageData(0,0,TW,TH),d=idIm.data;
+ /* кромка (обводка шире самой земли): берём номер ближайшей точно залитой точки */
+ const NB=[-1,1,-TW,TW,-TW-1,-TW+1,TW-1,TW+1,-2,2,-2*TW,2*TW,-TW-2,-TW+2,TW-2,TW+2,-2*TW-1,-2*TW+1,2*TW-1,2*TW+1];
+ for(let i=0;i<N;i++){let s=coreMap[i];
+  if(s===255&&d[i*4+1]>128){s=d[i*4];for(const o of NB){const j=i+o;if(j>=0&&j<N&&coreMap[j]!==255){s=coreMap[j];break;}}}
+  slotMap[i]=s;d[i*4]=s===255?0:s;d[i*4+1]=s===255?0:255;d[i*4+2]=0;d[i*4+3]=255;}
+ idX.putImageData(idIm,0,0);
  /* границы зон и берега: ищем соседние пиксели с разным хозяином */
  const im=lnX.getImageData(0,0,TW,TH),L=im.data;
  for(let y=0;y<TH-1;y++)for(let x=0;x<TW-1;x++){const i=y*TW+x,s=slotMap[i];
   if(s!==slotMap[i+1]){L[i*4+1]=255;L[(i+1)*4+1]=255;}if(s!==slotMap[i+TW]){L[i*4+1]=255;L[(i+TW)*4+1]=255;}}
  lnX.putImageData(im,0,0);}
 const slotAt=(u,v)=>slotMap[Math.min(TH-1,Math.max(0,Math.floor((1-v)*TH)))*TW+Math.min(TW-1,Math.max(0,Math.floor(u*TW)))];
+/* поле расстояний до границ земель и берегов, посчитанное по самим контурам (не по пикселям): по нему шейдер рисует ровные линии при любом приближении */
+const sdfTex=(()=>{const out=new Uint8Array(TW*TH).fill(255),R=6;
+ const core=(x,y)=>coreMap[Math.min(TH-1,Math.max(0,Math.floor(y)))*TW+Math.min(TW-1,Math.max(0,Math.floor(x)))];
+ const edge=(ax,ay,bx,by)=>{const dx=bx-ax,dy=by-ay,l2=dx*dx+dy*dy;if(l2<1e-9)return;const l=Math.sqrt(l2),nx=-dy/l,ny=dx/l,mx=(ax+bx)/2,my=(ay+by)/2;
+  /* отрезок рисуем, только если по разные стороны от него разные земли (или земля и море) */
+  if(core(mx+nx,my+ny)===core(mx-nx,my-ny))return;
+  for(let y=Math.max(0,Math.floor(Math.min(ay,by)-R)),ye=Math.min(TH-1,Math.ceil(Math.max(ay,by)+R));y<=ye;y++){const o=(TH-1-y)*TW,py=y+.5-ay;
+   for(let x=Math.max(0,Math.floor(Math.min(ax,bx)-R)),xe=Math.min(TW-1,Math.ceil(Math.max(ax,bx)+R));x<=xe;x++){
+    const px=x+.5-ax,t=Math.max(0,Math.min(1,(px*dx+py*dy)/l2)),ex=px-t*dx,ey=py-t*dy,v=Math.sqrt(ex*ex+ey*ey)*40;if(v<out[o+x])out[o+x]=v;}}};
+ const each=g=>{for(const poly of g)for(const ring of poly){const n=ring.length;for(let i=0;i<n;i+=2){const j=(i+2)%n;edge(X(ring[i]),Y(ring[i+1]),X(ring[j]),Y(ring[j+1]));}}};
+ W.countries.forEach(c=>each(c.g));each(W.extra);
+ const t=new THREE.DataTexture(out,TW,TH,THREE.RedFormat);t.minFilter=THREE.LinearMipmapLinearFilter;t.magFilter=THREE.LinearFilter;t.generateMipmaps=true;t.wrapS=THREE.RepeatWrapping;t.anisotropy=8;t.needsUpdate=true;return t;})();
 const idTex=new THREE.CanvasTexture(idC);idTex.minFilter=idTex.magFilter=THREE.NearestFilter;idTex.generateMipmaps=false;
 const lnTex=new THREE.CanvasTexture(lnC);lnTex.anisotropy=8;
 const ownData=new Uint8Array(64*4),ownTex=new THREE.DataTexture(ownData,64,1);ownTex.minFilter=ownTex.magFilter=THREE.NearestFilter;
@@ -291,36 +321,57 @@ function cloud(n,r0,r1,size,bright){const g=new THREE.BufferGeometry(),p=new Flo
 cloud(4500,60,110,.2,1.2);
 const dust=cloud(1800,1.3,3.2,.006,.8);
 const blank=new THREE.DataTexture(new Uint8Array([0,0,0,255]),1,1);blank.needsUpdate=true;
-const GU={tId:{value:idTex},tLine:{value:lnTex},tOwn:{value:ownTex},tLights:{value:blank},uTime:{value:0},uHov:{value:-1},uSun:{value:new THREE.Vector3(1,.3,0).normalize()},uTex:{value:new THREE.Vector2(TW,TH)}};
+const GU={tId:{value:idTex},tLine:{value:lnTex},tOwn:{value:ownTex},tLights:{value:blank},tSdf:{value:sdfTex},uTime:{value:0},uHov:{value:-1},uSel:{value:-1},uSun:{value:new THREE.Vector3(1,.3,0).normalize()},uTex:{value:new THREE.Vector2(TW,TH)}};
 const globe=new THREE.Mesh(new THREE.SphereGeometry(1,160,120),new THREE.ShaderMaterial({uniforms:GU,
  vertexShader:`varying vec2 vUv;varying vec3 vP,vWN,vV;void main(){vUv=uv;vP=position;vec4 w=modelMatrix*vec4(position,1.);
   vWN=normalize(mat3(modelMatrix)*normal);vV=cameraPosition-w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}`,
- fragmentShader:`uniform sampler2D tId,tLine,tOwn,tLights;uniform float uTime,uHov;uniform vec2 uTex;uniform vec3 uSun;
+ fragmentShader:`uniform sampler2D tId,tLine,tOwn,tLights,tSdf;uniform float uTime,uHov,uSel;uniform vec2 uTex;uniform vec3 uSun;
  varying vec2 vUv;varying vec3 vP,vWN,vV;`+NOISE+`
  float gl(float x){float l=abs(fract(x-.5)-.5)/fwidth(x);return 1.-min(l,1.);}
- vec3 ownAt(vec2 uv){vec4 it=texture2D(tId,uv);return texture2D(tOwn,vec2((floor(it.r*255.+.5)+.5)/64.,.5)).rgb*step(.5,it.g);}
+ float h21(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+ /* цвет владельца и метки «под курсором / выбрана» для одного пикселя карты */
+ vec3 ownAt(vec2 uv,out vec2 hs){vec4 it=texture2D(tId,uv);float s=floor(it.r*255.+.5),v=step(.5,it.g);
+  hs=v*vec2(1.-step(.5,abs(s-uHov)),1.-step(.5,abs(s-uSel)));return texture2D(tOwn,vec2((s+.5)/64.,.5)).rgb*v;}
  void main(){vec3 n=normalize(vP);float facing=max(dot(normalize(vWN),normalize(vV)),0.);
   vec4 it=texture2D(tId,vUv);float slot=floor(it.r*255.+.5),valid=step(.5,it.g);
   float dmg=(1.-texture2D(tOwn,vec2((slot+.5)/64.,.5)).a)*valid;
   /* цвет владельца сглаживаем по 4 соседним пикселям, чтобы не было лесенок */
-  vec2 st=vUv*uTex-.5,f2=fract(st),b=(floor(st)+.5)/uTex,px=1./uTex;
-  vec3 own=mix(mix(ownAt(b),ownAt(b+vec2(px.x,0.)),f2.x),mix(ownAt(b+vec2(0.,px.y)),ownAt(b+px),f2.x),f2.y);
-  vec4 ln=texture2D(tLine,vUv);float land=smoothstep(.25,.75,ln.r),border=ln.g;
+  vec2 st=vUv*uTex-.5,f2=fract(st),b=(floor(st)+.5)/uTex,px=1./uTex,h0,h1,h2,h3;
+  vec3 o0=ownAt(b,h0),o1=ownAt(b+vec2(px.x,0.),h1),o2=ownAt(b+vec2(0.,px.y),h2),o3=ownAt(b+px,h3);
+  vec3 own=mix(mix(o0,o1,f2.x),mix(o2,o3,f2.x),f2.y);vec2 hs=mix(mix(h0,h1,f2.x),mix(h2,h3,f2.x),f2.y);
+  /* tpp — сколько точек карты в одном пикселе экрана; near=1, когда карта растянута и нужны чёткие линии */
+  float tpp=length(fwidth(vP))*uTex.y/3.14159*.75,near=1.-smoothstep(.45,1.1,tpp),aa=max(tpp*.75,.02);
+  vec4 ln=texture2D(tLine,vUv);
+  float bd=texture2D(tSdf,vUv).r*255./40.,lw=clamp(fwidth(ln.r)*.8,.02,.25);
+  float land=mix(smoothstep(.25,.75,ln.r),smoothstep(.5-lw,.5+lw,ln.r),near);
+  float bw=max(.22,tpp),border=mix(ln.g,1.-smoothstep(bw-aa,bw+aa,bd),near);
   float glow=texture2D(tLine,vUv,4.5).r,bglow=texture2D(tLine,vUv,2.).g;
   float f=fbm(n*9.);
   vec3 lc=own*(.50+.22*f)+(own*.55+.28)*border+own*bglow*.25;
   float L=texture2D(tLights,vUv).r;float sun=dot(n,uSun),day=smoothstep(-.1,.2,sun);
-  float bt=mix(.24,.82,dmg);float burnt=dmg>.002?1.-smoothstep(bt-.07,bt,fbm(n*14.+2.)):0.;
-  float cr=1.-abs(fbm(n*24.)*2.-1.);
-  vec3 dead=vec3(.03,.02,.02)+vec3(2.6,.6,.08)*pow(cr,9.)*(.55+.45*sin(uTime*2.+f*30.))+vec3(.4,.1,.03)*border;
-  lc=mix(lc,dead,burnt);
-  if(valid>.5&&abs(slot-uHov)<.5)lc+=own*.22*(1.-burnt);
+  float burnt=0.;
+  if(dmg>.002){float bt=mix(.24,.82,dmg);burnt=1.-smoothstep(bt-.07,bt,fbm(n*14.+2.));
+   float cr=1.-abs(fbm(n*24.)*2.-1.);
+   vec3 dead=vec3(.03,.02,.02)+vec3(2.6,.6,.08)*pow(cr,9.)*(.55+.45*sin(uTime*2.+f*30.))+vec3(.4,.1,.03)*border;
+   lc=mix(lc,dead,burnt);}
+  /* подсветка: земля под курсором светлеет и получает яркий контур, выбранная ещё и пульсирует */
+  float hl=max(hs.x,hs.y)*(1.-burnt),pul=.5+.5*sin(uTime*4.5);
+  float ow=min(max(.75,2.6*tpp),5.),band=1.-smoothstep(ow-aa,ow+aa,bd);
+  lc+=(own*.26+.05)*hs.x*(1.-burnt)+(own*.2+.05)*hs.y*(.45+.55*pul)*(1.-burnt);
+  lc=mix(lc,mix(own,vec3(1.),.72)*1.3,band*hl*(.7+.3*max(1.-hs.y,pul)));
   vec3 oc=mix(vec3(.02,.075,.18),vec3(.045,.14,.30),facing)+vec3(.03,.22,.34)*glow*glow;
   oc+=vec3(.06,.13,.26)*max(gl(vUv.x*36.),gl(vUv.y*18.))*.22;
   vec3 col=mix(oc,lc,land)*(.72+.28*facing);
-  col*=mix(.26,1.,day);
+  col*=mix(.26,1.,max(day,hl*land*.75));
   col+=own*(border*.45+bglow*.1)*(1.-day)*land*(1.-burnt);
-  col+=vec3(1.,.8,.5)*pow(L,1.4)*1.15*(1.-day)*land*(1.-burnt);
+  /* ночные огни: вдали мягкое свечение, вблизи оно распадается на чёткие точки домов */
+  float nf=(1.-day)*land*(1.-burnt);
+  if(nf>.003&&L>.004){float soft=pow(L,1.4)*1.15,dots=0.,wm=0.,dens=pow(L,.9)*.7;vec2 q=vUv*vec2(2.,1.);
+   for(int k=0;k<2;k++){float sc=k==0?700.:2100.,cpx=uTex.y/sc/tpp,w=smoothstep(3.,7.,cpx);
+    if(w>0.){vec2 g=q*sc,id=floor(g)+float(k)*31.;float h=h21(id),hb=h21(id+7.3);
+     vec2 c=fract(g)-.5-(vec2(hb,h21(id+19.1))-.5)*.55;float r=.13+.1*hb,e=1.2/cpx;
+     dots+=w*step(h,dens)*(1.-smoothstep(r-e,r+e,length(c)))*(.55+.45*hb);wm=max(wm,w);}}
+   col+=(vec3(1.,.8,.5)*soft*(1.-.55*wm)+vec3(1.,.74,.42)*dots*(.75+.9*L))*nf;}
   col+=vec3(1.,.42,.14)*smoothstep(.16,0.,abs(sun-.03))*.12*(.35+.65*(1.-facing));
   col+=vec3(1.,.92,.75)*pow(max(dot(reflect(-uSun,n),normalize(vV)),0.),50.)*.16*(1.-land)*day;
   col+=vec3(.18,.5,1.)*pow(1.-facing,3.2)*.6*(.12+.88*smoothstep(-.3,.3,sun));
@@ -778,10 +829,11 @@ function buildDock(){
  $('dock').innerHTML=`<div id="en" data-t="земли без дела. Дай им приказ: строить, захватывать или исследовать"><b class="mono">0</b><small class="mono">свободно</small></div><span class="sep"></span>`
   +BK.map(w=>`<button class="wb" data-buy="${w}" style="color:${WCOL[w]}" aria-label="строить: ${w==='pvo'?'щит':WPN[w].n}">${IC[w]}<b class="cnt mono z">0</b><span class="lbl mono">${w==='pvo'?'ЩИТ':WPN[w].s}</span><span class="cost mono"></span></button>`).join('')
   +`<span class="sep"></span>`+UK.map(k=>`<button class="ub" data-up="${k}" aria-label="исследовать: ${UP[k].n}">${IC[k==='pvo'?'rad':k]}<span class="pips"><i></i><i></i><i></i></span><span class="cost mono"></span></button>`).join('');
- $('misc').innerHTML=`<button class="ib" id="bhelp" aria-label="обучение" data-t="обучение заново">${IC.help}</button><button class="ib" id="bpause" aria-label="пауза" data-t="пауза (пробел)">${IC.pause}</button><button class="ib" id="bsnd" aria-label="звук" data-t="звук">${IC.snd}</button><button class="ib" id="bmanage" style="width:auto;padding:0 12px;font-size:12px;color:#fde047" data-t="списать оружие, освободить ячейки или отменить дело">арсенал</button>`;
+ $('misc').innerHTML=`<button class="ib" id="bhelp" aria-label="обучение" data-t="обучение заново">${IC.help}</button><button class="ib" id="bpause" aria-label="пауза" data-t="пауза (пробел)">${IC.pause}</button><button class="ib" id="bsnd" aria-label="звук" data-t="звук">${IC.snd}</button><button class="ib" id="bpvo" aria-label="купола щитов" data-t="купола щитов: показывать всегда или только по делу (V)" style="color:#38bdf8">${IC.pvo}</button><button class="ib" id="bmanage" style="width:auto;padding:0 12px;font-size:12px;color:#fde047" data-t="списать оружие, освободить ячейки или отменить дело">арсенал</button>`;
  $('bmanage').onclick=()=>openArsenal();
  $('bpause').onclick=()=>{if(isGuest())return;paused=!paused;$('bpause').innerHTML=paused?IC.play:IC.pause;if(isHost())net.conn.send({t:'pause',v:paused});};
  $('bsnd').innerHTML=mute?IC.mute:IC.snd;$('bsnd').onclick=()=>{mute=!mute;if(master)master.gain.value=mute?0:.8;$('bsnd').innerHTML=mute?IC.mute:IC.snd;};
+ $('bpvo').onclick=togglePvo;$('bpvo').classList.toggle('on',showPvo);
  $('bhelp').onclick=()=>{tut.step=0;tut.on=true;showCoach();};}
 function refreshDock(){if(!running)return;const P=PW[me],mine=lands(me),idle=mine.filter(t=>!t.job),room=idle.some(t=>free(t)>0);
  $('en').firstChild.textContent=idle.length;$('en').classList.toggle('hot',idle.length>0);refreshArsenal();
@@ -833,9 +885,12 @@ function closeRadial(){$('radial').style.display='none';radT=null;}
 const jobTxt=t=>{const j=t.job;return(j.k==='b'?'строит: '+(j.w==='pvo'?'щит':WPN[j.w].n):j.k==='r'?'исследует: '+UP[j.w].n:'захватывает: '+T[j.x].name)+`, ещё ${Math.ceil(j.dur-j.t)} с`;};
 function placeRadial(){if(!radT)return;
  /* склад или дело земли изменились, пока меню открыто: перерисовать, если мышь не на кнопках */
- if(rkey(radT)!==radKey&&!$('radial').matches(':hover')){const t=radT;if(t.owner===me)openRadial(t);else if(t.owner!==-1&&!hostile(me,t))closeRadial();else radKey=rkey(t);if(!radT)return;}pv3.copy(radT.pos).multiplyScalar(1.014);if(!radT.alive||pv3.dot(camera.position)/camera.position.length()<.2)return closeRadial();
- pv3.project(camera);$('radial').style.transform=`translate(${((pv3.x+1)/2*innerWidth).toFixed(1)}px,${((1-pv3.y)/2*innerHeight).toFixed(1)}px)`;}
-function openRadial(t){const R=$('radial'),P=PW[me];let items=[];
+ if(rkey(radT)!==radKey&&!$('radial').matches(':hover')){const t=radT;if(t.owner===me)openRadial(t);else if(t.owner!==-1&&!hostile(me,t))closeRadial();else radKey=rkey(t);if(!radT)return;}pv3.copy(radP).multiplyScalar(1.014);if(!radT.alive||pv3.dot(camera.position)/camera.position.length()<.2)return closeRadial();
+ /* меню висит там, куда ткнули, и не уезжает за край экрана */
+ pv3.project(camera);const mx=Math.min(130,innerWidth/2),rx=THREE.MathUtils.clamp((pv3.x+1)/2*innerWidth,mx,innerWidth-mx),ry=THREE.MathUtils.clamp((1-pv3.y)/2*innerHeight,Math.min(130,innerHeight/2),Math.max(innerHeight/2,innerHeight-200));
+ $('radial').style.transform=`translate(${rx.toFixed(1)}px,${ry.toFixed(1)}px)`;}
+const radP=new THREE.Vector3();
+function openRadial(t,p){const R=$('radial'),P=PW[me];let items=[];if(p)radP.copy(p).normalize();else if(radT!==t)radP.copy(t.pos).normalize();
  if(hostile(me,t)){if(time<CFG.peace){log('перемирие: стрелять пока нельзя','#fde047');S.no();return;}
   items=WK.filter(w=>total(me,w)>0).map(w=>{const n=lands(me).filter(s=>ang(s,t)<=wRange(me,w)).reduce((a,s)=>a+s.st[w],0);
    return{c:'fire',w,col:WCOL[w],off:!n,n:n||total(me,w),tip:`${WPN[w].n}: ${n?'урон '+wDmg(me,w)+(wCount(me,w)>1?' × '+wCount(me,w):''):'отсюда не достаёт, смотри кольцо'}`};});
@@ -885,17 +940,31 @@ $('cnext').onclick=()=>{tut.step++;showCoach();};$('cskip').onclick=()=>{tut.on=
 addEventListener('keydown',async e=>{if(!running||['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName))return;const k=e.code,n='123456'.indexOf(e.key);
  if(n>=0&&n<5&&hov&&hostile(me,hov)){if(await order('fire',WK[n],hov)){S.click();tutEvent('fire');}else S.no();}
  else if(n>=0&&hov&&hov.owner===me){if(await order('buy',BK[n],null,hov)){S.buy();tutEvent(n===5?'pvo':'buy');}else S.no();}
- else if(k==='Escape'){closeRadial();closeArsenal();}else if(k==='Space'){e.preventDefault();$('bpause').onclick();}});
+ else if(k==='Escape'){closeRadial();closeArsenal();}else if(k==='KeyV')togglePvo();else if(k==='Space'){e.preventDefault();$('bpause').onclick();}});
 const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
-function landAt(x,y){mouse.set(x/innerWidth*2-1,-(y/innerHeight)*2+1);ray.setFromCamera(mouse,camera);const h=ray.intersectObject(globe)[0];if(!h)return null;
- const s=slotAt(h.uv.x,h.uv.y);return s>0&&s<255?T[s-1]:null;}
+/* точка глобуса под курсором: считаем по формуле шара, а не перебором треугольников — точнее и быстрее */
+const hitP=new THREE.Vector3(),hitT=new THREE.Vector3(),hitS=new THREE.Vector3();
+function globeAt(x,y,out){mouse.set(x/innerWidth*2-1,-(y/innerHeight)*2+1);ray.setFromCamera(mouse,camera);
+ const o=ray.ray.origin,d=ray.ray.direction,b=o.dot(d),h=b*b-o.lengthSq()+1;if(h<0)return null;const k=-b-Math.sqrt(h);if(k<0)return null;
+ return out.copy(d).multiplyScalar(k).add(o);}
+function unitAtP(p){const u=Math.atan2(p.z,-p.x)/6.2831853,s=slotAt(u<0?u+1:u,1-Math.acos(THREE.MathUtils.clamp(p.y,-1,1))/Math.PI);return s>0&&s<255?T[s-1]:null;}
+const SNAP=[[6,0],[-6,0],[0,6],[0,-6],[4,4],[-4,4],[4,-4],[-4,-4],[12,0],[-12,0],[0,12],[0,-12],[9,9],[-9,9],[9,-9],[-9,-9],[18,0],[-18,0],[0,18],[0,-18]];
+/* земля под курсором. hitP — куда именно ткнули. мелкие земли ловим с запасом: по значку рядом и по соседним точкам */
+function landAt(x,y){const on=globeAt(x,y,hitP);
+ const cl=camera.position.length(),lim=1/cl+.05;let best=null,bd=15;
+ for(const t of T){if(!t.alive||t.pos.dot(camera.position)/cl<lim)continue;hitT.copy(t.pos).project(camera);
+  const d=Math.hypot((hitT.x+1)/2*innerWidth-x,(1-hitT.y)/2*innerHeight-y);if(d<bd){bd=d;best=t;}}
+ if(best){if(!on)hitP.copy(best.pos);return best;}
+ if(on){const t=unitAtP(hitP);if(t)return t;}
+ for(const [dx,dy] of SNAP){if(!globeAt(x+dx,y+dy,hitS))continue;const t=unitAtP(hitS);if(t&&t.alive){hitP.copy(hitS);return t;}}
+ return null;}
 let down=null;const cv=renderer.domElement;
 cv.addEventListener('wheel',e=>{e.preventDefault();const k=e.deltaMode===1?.06:e.ctrlKey?.012:.0016;zoomT=THREE.MathUtils.clamp(zoomT*Math.exp(e.deltaY*k),1.3,5.5);fly=null;},{passive:false});
 cv.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];fly=null;controls.autoRotate=false;closeRadial();});
-cv.addEventListener('pointerup',e=>{if(!down)return;const moved=Math.hypot(e.clientX-down[0],e.clientY-down[1]);down=null;if(moved>6||e.button!==0)return;
+cv.addEventListener('pointerup',e=>{if(!down)return;const moved=Math.hypot(e.clientX-down[0],e.clientY-down[1]);down=null;if(moved>10||e.button!==0)return;
  const t=landAt(e.clientX,e.clientY);
  if(!running){if(!over&&t&&t.home>=0)$('pick').children[t.home].click();return;}
- if(over||!t||!t.alive||!PW[me].alive)return;S.click();openRadial(t,e.clientX,e.clientY);});
+ if(over||!t||!t.alive||!PW[me].alive)return;S.click();openRadial(t,hitP);});
 cv.addEventListener('pointermove',e=>{if(down)return;const t=landAt(e.clientX,e.clientY);if(t===hov)return;hov=t;GU.uHov.value=t&&t.alive?t.i+1:-1;
  document.body.style.cursor=t&&t.alive&&(running||t.home>=0)?'pointer':'';});
 
@@ -1026,17 +1095,29 @@ function stepVis(dt){const inc=new Map();
   const i=inc.get(t);u.uInc.value=i?i[0]:-1;if(i)u.uIncCol.value.copy(i[1]);
   {const on=running&&t.alive&&t.owner>=0&&t.st.pvo>0;
    if(on){const r=pvoRange(t.owner);if(!t.dome)mkDome(t);if(t.domeR!==r)setDome(t,r);t.domeF=Math.max(0,(t.domeF||0)-dt*1.4);
-    const d=t.du;d.uCol.value.set(WCOL.pvo).lerp(tmpC.set(pcol(t.owner)),.45);d.uA.value=(team[t.owner]===team[me]?.7:.22)*Math.min(1,.4+.2*t.st.pvo);d.uF.value=t.domeF;}
-   if(t.dome)t.dome.visible=on;}
+    /* купол виден не всегда: по кнопке/клавише V, при наведении на землю или на значок щита, и когда по зоне купола летит ракета */
+    let want=showPvo||hovW==='pvo'||hov===t||radT===t||t.domeF>0;if(!want)for(const x of inc.keys())if(ang(t,x)<=r){want=true;break;}
+    t.domeV=(t.domeV||0)+((want?1:0)-(t.domeV||0))*Math.min(dt*7,1);
+    const d=t.du;d.uCol.value.set(WCOL.pvo).lerp(tmpC.set(pcol(t.owner)),.45);d.uA.value=(team[t.owner]===team[me]?.7:.22)*Math.min(1,.4+.2*t.st.pvo)*t.domeV;d.uF.value=t.domeF;}
+   else t.domeV=0;
+   if(t.dome)t.dome.visible=on&&t.domeV>.01;}
   t.marker.scale.setScalar(.2*THREE.MathUtils.clamp(camera.position.length()/3,.45,1.15));
   u.uHi.value=running&&hovW&&WPN[hovW]&&hostile(me,t)&&inReach(me,hovW,t)?1:0;}
+ GU.uSel.value=radT&&radT.alive?radT.i+1:-1;
  showRings(ringList());pushOwn();}
+let showPvo=false;
+function togglePvo(){showPvo=!showPvo;$('bpvo')?.classList.toggle('on',showPvo);log(showPvo?'купола щитов: видны всегда':'купола щитов: только по делу','#38bdf8');}
+/* если кадры проседают, понемногу снижаем чёткость картинки, чтобы игра не тормозила */
+let curPR=PR,fpsT=0,fpsN=0,slowN=0;
+function setPR(v){curPR=v;renderer.setPixelRatio(v);composer.setPixelRatio(v);pmat.uniforms.uPx.value=innerHeight*v;}
+function adapt(raw){if(document.hidden||GU.uTime.value<5)return;fpsT+=raw;fpsN++;if(fpsT<1.5)return;const fps=fpsN/fpsT;fpsT=fpsN=0;
+ if(fps<42&&curPR>1){if(++slowN>=2){slowN=0;setPR(Math.max(1,curPR-.25));}}else slowN=0;}
 let lastSim=performance.now();
 /* хост в свёрнутой вкладке: браузер глушит кадры, а игра для друга должна идти */
 setInterval(()=>{if(!running||paused||!isHost())return;const now=performance.now();if(now-lastSim<300)return;let el=Math.min((now-lastSim)/1000,1.5);lastSim=now;
  while(el>0){sim(Math.min(el,.05));el-=.05;}},200);
 const clock=new THREE.Clock();
-function frame(){requestAnimationFrame(frame);tick(Math.min(clock.getDelta(),.05));}
+function frame(){requestAnimationFrame(frame);const raw=clock.getDelta();adapt(Math.min(raw,.25));tick(Math.min(raw,.05));}
 function tick(raw){GU.uTime.value+=raw;
  {const a=GU.uTime.value*6.2831853/CFG.day;GU.uSun.value.set(Math.cos(a),.3,Math.sin(a)).normalize();sunSp.position.copy(GU.uSun.value).multiplyScalar(80);}
  camera.position.sub(shakeV);
@@ -1053,7 +1134,7 @@ function tick(raw){GU.uTime.value+=raw;
  if(!paused){for(let i=fx.length-1;i>=0;i--)if(!fx[i](raw))fx.splice(i,1);stepParticles(raw);}
  composer.render();}
 stepVis(1);frame();
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight);pmat.uniforms.uPx.value=innerHeight*PR;});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight);pmat.uniforms.uPx.value=innerHeight*curPR;});
 </script>
 </body>
 </html>
