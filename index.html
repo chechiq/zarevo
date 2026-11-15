@@ -40,6 +40,14 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;str
 #warn button.s{border-color:#38bdf8;color:#bae6fd;background:rgba(56,189,248,.14);animation:none}
 #warn button.k{color:#fff;background:rgba(239,68,68,.5)}
 #warn button:hover{border-color:#fff}
+/* ядерный пуск на отсчёте: кто, куда, сколько осталось и кнопка «осудить» */
+#nukes{margin-top:8px;display:none;flex-direction:column;gap:6px;align-items:center;pointer-events:auto}
+#nukes div{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:min(560px,96vw);padding:6px 8px 6px 14px;border-radius:18px;border:1px solid #ff3b3b;background:rgba(90,16,16,.9);color:#fecaca;font-size:12px;font-weight:700;cursor:pointer}
+#nukes div.me{background:rgba(220,38,38,.75);color:#fff;animation:blink .7s infinite alternate}
+#nukes b{color:#fff}
+#nukes small{flex-basis:100%;font-size:11px;font-weight:500;color:#fecaca;opacity:.9;max-width:560px;text-align:center}
+#nukes button{padding:5px 12px;border-radius:999px;border:1px solid #fff;background:#fff;color:#7f1d1d;font-weight:800;font-size:11px;cursor:pointer}
+#nukes button[disabled]{background:none;color:#fecaca;border-color:rgba(254,202,202,.5);cursor:default}
 /* эскалация: уровень войны, темп и нагрузка на снабжение */
 #esc{margin:6px auto 0;display:none;gap:8px;align-items:center;justify-content:center;width:max-content;padding:4px 11px;border-radius:999px;background:var(--card);border:1px solid var(--line);font:700 10px 'JetBrains Mono',monospace;letter-spacing:.08em;pointer-events:auto;cursor:help}
 #esc .ep{display:flex;gap:2px}#esc .ep i{width:14px;height:4px;border-radius:2px;background:rgba(148,163,184,.25);overflow:hidden}#esc .ep i b{display:block;height:100%;background:currentColor}
@@ -63,6 +71,25 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;str
 .wb.off,.ub.off{opacity:.36}.wb.run,.ub.run{border-color:#fde047}
 .wb.lock svg.ic{opacity:.3}.wb.lock::after{content:"";position:absolute;inset:0;border-radius:12px;background:repeating-linear-gradient(45deg,transparent 0 6px,rgba(148,163,184,.08) 6px 7px)}
 .ub{width:50px}
+/* кнопка ядерного удара: отдельная, красная, в режиме прицела мигает */
+.nkb{position:relative;width:58px;height:66px;border-radius:12px;border:1px solid #ff3b3b;background:rgba(239,68,68,.16);color:#ff6a5a;display:grid;justify-items:center;align-content:center;gap:2px;transition:transform .15s,background .15s,border-color .15s,opacity .15s}
+.nkb:hover:not(.off){background:rgba(239,68,68,.38);border-color:#fff;color:#fff;transform:translateY(-2px)}
+.nkb .lbl{font-size:9px;letter-spacing:.06em;color:#fca5a5}.nkb .cost{font-size:10px;color:#fde047}
+.nkb .cnt{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;border-radius:10px;background:#ff3b3b;color:#fff;font-size:11px;display:grid;place-items:center;padding:0 5px}
+.nkb .cnt.z{background:#1e293b;color:var(--mut)}
+.nkb.off{opacity:.36}.nkb.on{background:#ef4444;color:#fff;border-color:#fff;animation:blink .45s infinite alternate}
+body.nukemode canvas{cursor:crosshair!important}
+/* памятка в режиме прицела: что будет, если нажать */
+#nukehelp{display:none;position:fixed;right:16px;top:50%;transform:translateY(-50%);width:min(340px,92vw);padding:14px 16px;border-color:#ff3b3b;font-size:12.5px;line-height:1.45;z-index:30;pointer-events:none}
+#nukehelp b{display:block;color:#ff6a5a;font-size:12px;letter-spacing:.06em;margin-bottom:8px}
+#nukehelp p{margin:0 0 7px;padding-left:24px;position:relative}
+#nukehelp p i{position:absolute;left:0;top:1px;width:17px;height:17px;border-radius:50%;background:#ff3b3b;color:#fff;font-style:normal;font-size:10px;font-weight:800;display:grid;place-items:center}
+#nukehelp u{color:#fde047;text-decoration:none;font-weight:800}
+#nukehelp small{display:block;color:var(--mut);margin-top:8px}
+/* вспышка ядерного взрыва и красные края экрана, пока удар в воздухе */
+#flash{position:fixed;inset:0;background:radial-gradient(circle,#fff 0%,#fff2c8 45%,#ff9a3a 100%);opacity:0;pointer-events:none;z-index:40}
+body.nukeair::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:39;box-shadow:inset 0 0 140px 30px rgba(255,40,20,.6);animation:nukepulse .5s infinite alternate}
+@keyframes nukepulse{to{opacity:.3}}
 .pips{display:flex;gap:2px}.pips i{width:8px;height:3px;border-radius:2px;background:rgba(148,163,184,.25)}.pips i.on{background:#fde047}
 .pulse{animation:pulse 1s infinite}
 @keyframes pulse{50%{box-shadow:0 0 0 6px rgba(253,224,71,.25);border-color:#fde047}}
@@ -76,10 +103,18 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;str
 .ib.on{background:rgba(56,189,248,.22);border-color:#38bdf8}
 #bping.on{background:rgba(253,224,71,.25);border-color:#fde047;color:#fde047}
 /* подсказка-обучение */
-#coach{position:absolute;left:50%;bottom:108px;transform:translateX(-50%);padding:10px 12px 10px 16px;display:none;align-items:center;gap:12px;font-size:13px;font-weight:700;pointer-events:auto;border-color:rgba(253,224,71,.5);max-width:min(560px,90vw)}
-#coach .n{color:#fde047;font-size:11px}
+#coach{position:fixed;left:50%;bottom:108px;transform:translateX(-50%);z-index:3;padding:10px 12px 10px 16px;display:none;align-items:center;gap:12px;font-size:13px;font-weight:700;pointer-events:auto;border-color:rgba(253,224,71,.5);max-width:min(560px,90vw)}
+#coach.anchored{left:0;top:0;bottom:auto;transform:none}
+#coach::after{content:"";position:absolute;left:var(--tail,50%);bottom:-6px;width:10px;height:10px;background:var(--card);border-right:1px solid rgba(253,224,71,.5);border-bottom:1px solid rgba(253,224,71,.5);transform:translateX(-50%) rotate(45deg)}
+#coach.below::after{top:-6px;bottom:auto;border-right:0;border-bottom:0;border-left:1px solid rgba(253,224,71,.5);border-top:1px solid rgba(253,224,71,.5)}
+#coach.noTail::after{display:none}
+#coach .n{color:#fde047;font-size:11px;white-space:nowrap}
+#coach.ok .n{color:#4ade80}
+#coach .t{min-width:0}
 #coach button{padding:6px 12px;border-radius:9px;border:1px solid var(--line);font-size:12px;font-weight:700;white-space:nowrap}
 #coach button:hover{border-color:#fff}
+/* причина, почему действие недоступно */
+#why{position:fixed;left:0;top:0;z-index:7;display:none;max-width:min(320px,86vw);padding:8px 11px;border-radius:11px;border:1px solid rgba(253,224,71,.55);background:rgba(11,13,20,.97);color:#fde047;font:700 12px/1.35 Manrope,sans-serif;box-shadow:0 10px 28px rgba(0,0,0,.5);pointer-events:none}
 /* круговое меню */
 #radial{position:fixed;left:0;top:0;z-index:4;display:none}
 #radial .rb{position:absolute;width:52px;height:52px;margin:-26px;border-radius:50%;border:1px solid rgba(255,255,255,.5);background:rgba(11,13,20,.9);display:grid;place-items:center;color:#fff;transition:transform .12s,background .12s;animation:rin .16s ease-out backwards}
@@ -185,13 +220,19 @@ body.pingmode canvas{cursor:crosshair!important}
  #dock{left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom));transform:none;flex-wrap:wrap;justify-content:center;gap:4px;padding:6px}
  #dock .sep{display:none}
  #en{min-width:40px;padding:0 2px}#en b{font-size:18px}#en small{display:none}
- .wb{width:44px;height:52px}.ub{width:60px;height:40px}
+ .wb,.nkb{width:44px;height:52px}.ub{width:60px;height:40px}.nkb .lbl{display:none}.nkb svg.ic{width:17px;height:17px}
+ #nukehelp{right:4vw;top:auto;bottom:150px;transform:none;font-size:11.5px}
  .wb svg.ic,.ub svg.ic{width:17px;height:17px}.wb .lbl{display:none}
  #misc{left:8px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 122px);gap:4px}
  #abil{right:8px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 122px);padding:6px}#abil>span:last-child{display:none}
  #sitebar{right:8px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 168px)}
  .ib{width:36px;height:36px}
- #coach{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 168px);font-size:12px;max-width:96vw;width:max-content}
+ #coach{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 168px);font-size:12px;max-width:96vw;width:auto;flex-wrap:wrap;align-items:flex-start;gap:5px 9px;padding:8px 9px 9px 12px}
+  #coach .n{flex:1 0 100%;white-space:normal;line-height:1.25}
+  #coach .t{flex:1 1 140px;line-height:1.35}
+  #coach button{align-self:flex-end}
+  #coach #cskip{align-self:flex-start;margin-top:-2px}
+ #why{max-width:92vw;font-size:11px}
  .ov{padding:3vh 10px 2vh;overflow-y:auto;justify-content:flex-start;gap:12px}
  #start h1{font-size:44px}.tag{font-size:9px;letter-spacing:.2em}
  .chip{padding:6px 9px;font-size:11px}#acard{font-size:12px;padding:8px 10px;min-height:0}#go{padding:13px 36px}
@@ -206,7 +247,7 @@ body.pingmode canvas{cursor:crosshair!important}
  .ov{overflow-y:auto;justify-content:flex-start;gap:10px;padding:2vh 10px}#start h1{font-size:40px}
 }
 /* палец толще курсора: мелкие кнопки кругового меню крупнее */
-@media (pointer:coarse){#radial .rs{width:28px;height:28px;margin:-14px;font-size:11px}}
+@media (pointer:coarse){#radial .rs{width:28px;height:28px;margin:-14px;font-size:11px}#coach button{padding:9px 13px;font-size:13px}#cskip{min-width:36px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
@@ -219,15 +260,18 @@ body.pingmode canvas{cursor:crosshair!important}
 <div id="kbx"></div>
 <div id="hud">
   <div id="plist" class="card"></div>
-  <div id="top"><div id="clock" class="mono">00:00</div><div id="esc" data-t="темп войны: после перемирия все стройки ускоряются, а залпы ботов растут с каждым уровнем. Снабжение: каждая земля сверх первых двух замедляет стройки и захваты державы"></div><div id="warn" data-t="клик или клавиша T: камера к месту удара"></div></div>
+  <div id="top"><div id="clock" class="mono">00:00</div><div id="esc" data-t="темп войны: после перемирия все стройки ускоряются, а залпы ботов растут с каждым уровнем. Снабжение: каждая земля сверх первых двух замедляет стройки и захваты державы. Каждый ядерный удар поднимает эскалацию на уровень; чем она выше, тем больше держав должно осудить пуск, чтобы были санкции. Санкции: никаких исследований и ракет, летают только дроны"></div><div id="warn" data-t="клик или клавиша T: камера к месту удара"></div><div id="nukes"></div></div>
   <div id="feed"></div>
-  <div id="coach" class="card"><span class="n mono"></span><span class="t"></span><button id="cnext">дальше</button><button id="cskip" aria-label="пропустить обучение">✕</button></div>
+  <div id="coach" class="card" role="status" aria-live="polite" aria-atomic="true"><span class="n mono"></span><span class="t"></span><button id="cnext">дальше</button><button id="cskip" aria-label="пропустить обучение">✕</button></div>
+  <div id="why" role="status" aria-live="polite"></div>
   <div id="dock" class="card"></div>
   <div id="abil" class="card"></div>
   <div id="misc"></div>
   <div id="sitebar"></div>
 </div>
 <div id="radial"></div>
+<div id="nukehelp" class="card"></div>
+<div id="flash"></div>
 <div id="tip" class="card"></div>
 <div id="start" class="ov">
   <div><h1 aria-label="БИМ БИМ БАМ БАМ">БИМ БИМ<br>БАМ БАМ</h1><div class="tag">12 ДЕРЖАВ · ДО 5 ИГРОКОВ · ОДНА ПЛАНЕТА</div></div>
@@ -270,6 +314,16 @@ const CFG={
  coop:.45, coopMax:3,        // совместное исследование: каждая лишняя земля ускоряет на coop, максимум coopMax земель
  day:90,                  // сек на полный оборот солнца
  fallout:75, wasteHp:.7, wasteSlots:2,   // сожжённая земля через fallout сек снова ничья, но слабее; второй раз сгорает навсегда
+ /* ядерный удар: по одной штуке у каждой державы со старта, заново не строится. Летит всегда; голосование решает только цену */
+ nuke:{
+  start:1, dmg:40, count:20,      // штук на старте, урон, сек отсчёта перед пуском (время на осуждение)
+  need:[.34,.5,.67,.84,1],        // какая доля остальных держав должна осудить пуск, чтобы были санкции: по уровням эскалации
+  sanc:120, hate:4,               // санкции: сколько секунд нельзя исследовать и пускать ракеты (дроны можно); насколько сильнее боты хотят бить изгоя
+  coal:120, coalDmg:1.5,          // коалиция осудивших: сек и множитель урона по изгою (по другим в это время стрелять нельзя)
+  esc:.25,                        // на сколько каждый пуск поднимает темп войны (.25 = один уровень эскалации)
+  aiVote:[.3,.5,.7],              // боты: шанс осудить чужую ссору, по сложности
+  aiFire:.012, aiPanic:.35        // боты: шанс пуска за одно «думанье», если мир скорее промолчит; при какой доле прочности столицы жмут от отчаяния
+ },
  /* особые объекты: count штук на карте, gap минимальное расстояние между ними (радианы), дальше множители и прибавки */
  site:{count:6,gap:.55,cosRange:1.15,cosRkt:.7,uraTime:.7,uraDmg:3,radRange:1.25,radDrones:2,fabSlots:2,fabTime:.5,bunHp:3,bunArm:.85,hubCap:.65},
  aiThink:[2.5,4.5], aiAttackCd:[50,90], aiGrab:.3,   // aiGrab: как жадно боты хватают ничьи земли (0..1)
@@ -282,7 +336,9 @@ const WPN={
  t:{n:'Тактическая ракета',s:'ТАКТ',time:20,dmg:5,range:.8,spd:[7,10],h:.07,lvl:0,desc:'Близко и быстро'},
  m:{n:'Ракета средней дальности',s:'СРЕД',time:32,dmg:8,range:1.7,spd:[9,10],h:.2,lvl:1,desc:'Достаёт соседние континенты'},
  i:{n:'МБР',s:'МБР',time:55,dmg:13,range:3.2,spd:[16,8],h:.5,lvl:2,desc:'Летит в любую точку планеты'},
- h:{n:'Гиперзвук',s:'ГИПЕР',time:65,dmg:9,range:1.9,spd:[4,5],h:.035,lvl:3,nopvo:true,desc:'Щит его не сбивает'}};
+ h:{n:'Гиперзвук',s:'ГИПЕР',time:65,dmg:9,range:1.9,spd:[4,5],h:.035,lvl:3,nopvo:true,desc:'Щит его не сбивает'},
+ /* ядерный удар: не строится и на складе не лежит (его нет в WK), счётчик хранится у державы */
+ n:{n:'Ядерный удар',s:'ЯДЕР',time:0,dmg:CFG.nuke.dmg,range:3.2,spd:[16,8],h:.6,lvl:9,nopvo:true,desc:'Сносит землю целиком. Щит его не сбивает'}};
 const WK=['d','t','m','i','h'],BK=[...WK,'pvo'];
 const UP={
  eco:{n:'Заводы',time:[60,100,150],desc:'Всё строится на 20% быстрее за уровень'},
@@ -612,6 +668,7 @@ let team=POWERS.map((_,i)=>i);                       // у кого одинак
 const powerState=()=>({up:{eco:0,rkt:0,pvo:0,arm:0},nb:0,atk:0,think:3+Math.random()*4,alive:true,regen:0,
  grudge:POWERS.map(()=>0),foe:-1,foeT:0,tgt:-1,need:null,   // память бота: кто сколько урона нанёс, кого он сейчас давит, какую землю и какого оружия ему не хватает
  site:{cos:0,ura:0,rad:0,fab:0,bun:0,hub:0},        // сколько особых объектов каждого вида у державы
+ nuke:CFG.nuke.start,sanc:0,coalFoe:-1,coalT:0,     // ядерных ударов в запасе; до какого времени под санкциями; против кого в коалиции и до какого времени
  stat:{shots:0,icp:0,cap:0,burn:0}});               // итоги боя: выпущено, сбито щитами, захвачено, сожжено
 const PW=POWERS.map(powerState);
 let net=null,netPeer=null,connecting=false,connectTimer=null;const isGuest=()=>net&&net.role==='guest',isHost=()=>net&&net.role==='host';
@@ -629,9 +686,14 @@ function setSites(list){for(const t of T)t.site=null;if(Array.isArray(list))for(
  for(const t of T)t.dirty=true;refreshSites();}
 /* правила с учётом способностей стран */
 /* темп войны растёт после перемирия; большая держава платит за размер: снабжение растянуто, стройки и захваты идут медленнее */
-const tempo=()=>1+Math.max(0,time-CFG.peace)/CFG.escalate;
+let escBoost=0;       // прибавка к темпу от ядерных ударов: каждый пуск толкает эскалацию вверх
+const nukes=[];       // ядерные удары, по которым идёт отсчёт: {by: кто, ti: номер земли-цели, t: сколько секунд осталось, votes: кто осудил}
+const tempo=()=>1+Math.max(0,time-CFG.peace)/CFG.escalate+escBoost;
 const escLvl=()=>Math.floor((tempo()-1)/CFG.escStep+1e-9);
 const strain=p=>CFG.supply.per*Math.max(0,lands(p).length-CFG.supply.free);
+const sanctioned=p=>time<PW[p].sanc;
+/* против кого держава сейчас в коалиции (-1, если ни против кого) */
+const coalFoe=p=>{const P=PW[p];return time<P.coalT&&P.coalFoe>=0&&PW[P.coalFoe].alive?P.coalFoe:-1;};
 const speed=p=>(1+CFG.ecoPerLvl*PW[p].up.eco)*tempo()/(1+strain(p));
 /* сверхдержава: у кого земель заметно больше всех. Боты бьют её в первую очередь */
 let dom=-1;
@@ -669,7 +731,7 @@ function shieldUse(q){const t=q.T,D=defenders(t);
  let left=q.w==='i'?2:1;if(D.reduce((a,x)=>a+x.st.pvo,0)<left)return null;
  for(const x of D){const k=Math.min(left,x.st.pvo);x.st.pvo-=k;x.dirty=true;left-=k;if(!left)break;}return D[0];}
 const cover=t=>defenders(t).reduce((a,s)=>a+s.st.pvo,0);   // сколько зарядов щита прикрывает землю
-const dmgTo=(p,w,t)=>wDmg(p,w)*(1-CFG.armPerLvl*PW[t.owner].up.arm)*(has(t.owner,'bun')?CFG.site.bunArm:1);
+const dmgTo=(p,w,t)=>wDmg(p,w)*(1-CFG.armPerLvl*PW[t.owner].up.arm)*(has(t.owner,'bun')?CFG.site.bunArm:1)*(coalFoe(p)===t.owner?CFG.nuke.coalDmg:1);
 const checkAt=w=>w==='d'?.8:.72;                           // на какой доле пути щит решает, сбивать ли
 /* прогноз по волне, летящей в землю t: что собьёт щит, а что долетит. Счёт тот же, что в shieldUse, только заряды не тратятся */
 function threat(t){const Q=projs.filter(q=>!q.dead&&q.T===t&&team[q.owner]!==team[t.owner]&&!(q.ic&&q.ic.ok)&&!q.sv).sort((a,b)=>(checkAt(a.w)-a.t)*a.dur-(checkAt(b.w)-b.t)*b.dur);
@@ -726,10 +788,35 @@ function nuke(pos,s,audible){pos=pos.clone().normalize().multiplyScalar(1.012);
  const near=camera.position.clone().normalize().dot(pos.clone().normalize());
  if(near>.2){shake=Math.max(shake,.03*s*near);}
  if(audible)S.boom(Math.min(s,1)*(near>0?1:.4));}
+/* ядерный взрыв: вспышка на весь экран, огненный гриб, расходящиеся кольца, долгие угли и двойной раскат */
+function megaNuke(at){
+ const up=at.clone().normalize(),p=up.clone().multiplyScalar(1.012),hi=k=>up.clone().multiplyScalar(1.012+k);
+ const near=camera.position.clone().normalize().dot(up);
+ nuke(p,2.6,true);
+ /* кольца ударной волны: белое, жёлтое, рыжее, багровое, каждое шире и медленнее */
+ [['#ffffff',1.1,1.6],['#ffe9b0',1.7,2.4],['#ff6a20',2.4,3.2],['#c0182a',3.2,4.2]].forEach(([col,size,dur],k)=>setTimeout(()=>shock(p,size,col,dur),k*220));
+ /* ножка гриба: огненные шары один над другим */
+ for(let k=0;k<7;k++)setTimeout(()=>fireball(hi(.018*k),.13-.008*k,k%2?'#ff5a14':'#ffb040',2.4,.035),k*110);
+ /* шапка: расползается наверху и долго тлеет */
+ setTimeout(()=>{fireball(hi(.14),.55,'#ffe2a0',3.2,.012);fireball(hi(.15),.42,'#ff4a12',4.4,.014);fireball(hi(.16),.3,'#7a1020',5.5,.016);
+  burst(hi(.14),Math.round(260*FXQ),.3,tmpC.set('#ff8a30'),.03,3.5);},650);
+ /* искры во все стороны и медленные угли над землёй */
+ burst(p,Math.round(520*FXQ),1,tmpC.set('#ffffff'),.014,1.6);
+ burst(p,Math.round(420*FXQ),.55,tmpC.set('#ffc040'),.026,3);
+ burst(p,Math.round(380*FXQ),.2,tmpC.set('#ff2a10'),.045,6);
+ burst(p,Math.round(200*FXQ),.1,tmpC.set('#a01030'),.05,8);
+ if(near>-.1){
+  shake=Math.max(shake,.13*Math.max(near,.3));
+  const f=$('flash');f.style.transition='none';f.style.opacity=.35+.6*Math.max(near,0);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{f.style.transition='opacity 1.8s ease-out';f.style.opacity=0;}));
+ }
+ setTimeout(()=>S.boom(1),480);setTimeout(()=>S.boom(.8),1100);
+}
 function airburst(pos,col){fireball(pos,.1,'#ffffff',.35);fireball(pos,.13,col,.8);burst(pos,70,.25,tmpC.set(col),.016,1);burst(pos,30,.15,tmpC.set('#ffffff'),.012,.7);}
 /* эффекты, которые хост пересылает гостю */
 const FXN={
  nuke:(i,s,p)=>nuke(T[i].pos,s,battleAudible(p,T[i].owner)),
+ mega:i=>megaNuke(T[i].pos),
  air:(x,y,z,col,p,o)=>{airburst(new THREE.Vector3(x,y,z),col);if(battleAudible(p,o))S.pop();},
  intc:(i,x,y,z,dur)=>{T[i].domeF=1;const from=T[i].pos.clone().multiplyScalar(1.015),to=new THREE.Vector3(x,y,z),h=mkSprite('#bfe9ff',.03,5);scene.add(h);let t=0;const c=new THREE.Color('#9fdcff'),z0=new THREE.Vector3();
   fx.push(dt=>{t+=dt/dur;if(t>=1){scene.remove(h);h.material.dispose();return false;}h.position.lerpVectors(from,to,t);emit(h.position,z0,c,.014,.6,2);return true;});},
@@ -760,7 +847,7 @@ function ribbon(a,b,h,col,rad,turns,ph,k,tail,path){const p=new Float32Array((SE
 function fadeLines(ls){let t=0;fx.push(dt=>{t+=dt/1.8;for(const l of ls)l.material.uniforms.uFade.value=Math.max(1-t,0);
   if(t>=1){for(const l of ls){scene.remove(l);l.geometry.dispose();l.material.dispose();}return false;}return true;});}
 /* модели: корпус, нос в цвет хозяина, стабилизаторы */
-const MS={t:{L:.03,R:.0028},m:{L:.042,R:.0034},i:{L:.062,R:.0046},h:{L:.05,R:.0036}},geoCache={},matCache={};
+const MS={t:{L:.03,R:.0028},m:{L:.042,R:.0034},i:{L:.062,R:.0046},h:{L:.05,R:.0036},n:{L:.085,R:.0064}},geoCache={},matCache={};
 const bodyMat=new THREE.MeshBasicMaterial({color:new THREE.Color(.62,.68,.78)}),finMat=new THREE.MeshBasicMaterial({color:new THREE.Color(.3,.34,.42),side:THREE.DoubleSide});
 function missile(w,col){const {L,R}=MS[w],g=new THREE.Group();const G=geoCache[w]||(geoCache[w]=w==='h'?
   {body:new THREE.ConeGeometry(R*1.5,L,6),fin:new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute([0,L*.1,0, R*4.5,-L*.5,0, 0,-L*.42,0, 0,L*.1,0, -R*4.5,-L*.5,0, 0,-L*.42,0],3))}:
@@ -816,11 +903,13 @@ function mkProj(d){const src=T[d.si],tg=T[d.ti],c=pcol(d.owner),W_=WPN[d.w];
   q.mesh=new THREE.Mesh(uavGeo,LOW?(dmat[c+'|'+B]||(dmat[c+'|'+B]=new THREE.MeshBasicMaterial({color:new THREE.Color(c).lerp(new THREE.Color('#fff'),.5).multiplyScalar(2.2*B),side:THREE.DoubleSide}))):new THREE.MeshBasicMaterial({color:new THREE.Color(c).lerp(new THREE.Color('#fff'),.5).multiplyScalar(2.2*B),side:THREE.DoubleSide}));q.mesh.scale.setScalar(.9);
   q.lines=d.k===0?[ribbon(q.a,q.b,q.h,c,0,0,0,1.2*B,.25,mine)]:[];q.glow=mkSprite(c,.02,3*B);if(mine&&d.k===0)S.uav();
  }else{q.mesh=missile(d.w,c);
-  const fat={t:1,m:1.4,i:2.2,h:2.4}[d.w];
+  const fat={t:1,m:1.4,i:2.2,h:2.4,n:3.4}[d.w];
   q.lines=[ribbon(q.a,q.b,q.h,d.w==='h'?'#e9d5ff':c,0,0,0,2.2*B*fat,(d.w==='h'?.7:.42)*(mine?1:.5),mine)];
-  if(d.w==='i'&&mine)q.lines.push(ribbon(q.a,q.b,q.h,'#ffffff',.01,5,d.ph,.7,.3));
-  q.glow=mkSprite(d.w==='h'?'#c4b5fd':'#ffcf8a',MS[d.w].L*1.3,4*B);
-  burst(src.pos.clone().multiplyScalar(1.015),30,.1,q.col,.016,.9);if(mine)S.launch(d.w==='i'?1.3:1);}
+  if((d.w==='i'||d.w==='n')&&mine)q.lines.push(ribbon(q.a,q.b,q.h,'#ffffff',.01,5,d.ph,.7,.3));
+  q.glow=mkSprite(d.w==='n'?'#ff3a1a':d.w==='h'?'#c4b5fd':'#ffcf8a',MS[d.w].L*(d.w==='n'?2.4:1.3),d.w==='n'?7:4*B);
+  burst(src.pos.clone().multiplyScalar(1.015),30,.1,q.col,.016,.9);if(mine)S.launch(d.w==='i'?1.3:1);
+  /* ядерный удар стартует с грохотом и сиреной у всех, кто бы его ни пустил */
+  if(d.w==='n'){const at=src.pos.clone().multiplyScalar(1.015);burst(at,Math.round(220*FXQ),.3,tmpC.set('#ff5a20'),.03,2);shock(at,.6,'#ff3b3b',1.8);S.launch(1.6);S.alarm();}}
  scene.add(q.mesh,q.glow);projs.push(q);return q;}
 function spawn(p,w,src,tg,k=0){const a=ang(src,tg),s=WPN[w].spd;PW[p].stat.shots++;
  return mkProj({id:++pid,w,si:src.i,ti:tg.i,t:0,dur:s[0]+s[1]*a,owner:p,k,ph:Math.random()*6,off:w==='d'?(k-(wCount(p,w)-1)/2)*.018:0});}
@@ -835,9 +924,14 @@ function destroyLand(t,by){if(!t.alive)return;const o=t.owner;
 function hit(q){const t=q.T,p=q.owner;
  if(!hostile(p,t)){fxNet('nuke',t.i,.25,p);return;}
  const dmg=dmgTo(p,q.w,t);t.hp-=dmg;t.dirty=true;PW[t.owner].grudge[p]+=dmg;   // бот запомнит, кто его бил
- const big=q.w==='d'?.22:.35+dmg*.045;
- if(t.hp<=0){destroyLand(t,p);fxNet('nuke',t.i,big+.3,p);}
- else{fxNet('nuke',t.i,big,p);if(q.w!=='d'||q.k===0)logTo(t.owner,`удар по тебе: ${t.name} (${POWERS[p].name})`,'#ef4444');}}
+ const big=q.w==='d'?.22:.35+dmg*.045,dead=t.hp<=0,nk=q.w==='n';
+ if(dead){
+  destroyLand(t,p);
+  /* выжженная земля: после ядерного удара земля не оживает и ничьей больше не станет */
+  if(nk){t.burns=2;t.rev=0;fxNet('log',`${t.name}: выжженная земля. Здесь больше ничего не будет`,'#ff3b3b');}
+ }
+ if(nk)fxNet('mega',t.i);else fxNet('nuke',t.i,dead?big+.3:big,p);
+ if(!dead&&(q.w!=='d'||q.k===0))logTo(t.owner,`удар по тебе: ${t.name} (${POWERS[p].name})`,'#ef4444');}
 const mtx=new THREE.Matrix4(),vx=new THREE.Vector3(),vy=new THREE.Vector3(),vz=new THREE.Vector3(),qd=new THREE.Vector3();
 /* auth=true: хост/одиночка считает перехваты и попадания; гость только двигает картинку */
 function stepProjs(dt,auth){for(const q of projs){if(q.dead)continue;q.t+=dt/q.dur;const t=Math.min(q.t,1);
@@ -848,7 +942,9 @@ function stepProjs(dt,auth){for(const q of projs){if(q.dead)continue;q.t+=dt/q.d
   q.mesh.position.copy(q.pos);
   if(q.w==='d'){q.glow.position.copy(q.pos);if(Math.random()<.6)emit(q.pos,tmpV.set(0,0,0),q.col,.008,1,1.4);}
   else{const L=MS[q.w].L;q.glow.position.copy(q.pos).addScaledVector(qd,-L*.62);q.glow.scale.setScalar(L*(1.1+.5*Math.random()));
-   tmpV.randomDirection().multiplyScalar(.006).addScaledVector(qd,-.02);emit(q.glow.position,tmpV,q.w==='h'?tmpC.set('#c4b5fd'):tmpC.set('#ffb060'),.014,.7,2);}
+   tmpV.randomDirection().multiplyScalar(.006).addScaledVector(qd,-.02);emit(q.glow.position,tmpV,q.w==='h'?tmpC.set('#c4b5fd'):tmpC.set('#ffb060'),.014,.7,2);
+   /* ядерный удар тянет за собой густой красно-рыжий шлейф */
+   if(q.w==='n')for(let k=0;k<(LOW?2:5);k++){tmpV.randomDirection().multiplyScalar(.012).addScaledVector(qd,-.03);emit(q.glow.position,tmpV,tmpC.set(k%2?'#ff2a10':'#ffd070'),.03,1.6,2.4);}}
   for(const l of q.lines)l.material.uniforms.uHead.value=t;
   if(!auth)continue;
   const o=q.T.owner;
@@ -869,7 +965,8 @@ function build(p,w,x,preview=false){const P=PW[p];if(!P||!P.alive||!BK.includes(
  t.job={k:'b',w,t:0,dur:landTime(t,w)};t.dirty=true;return true;}
 function autoBuild(p,t,w,preview=false){const P=PW[p];if(!P?.alive||!t?.alive||t.owner!==p||(w!==''&&(!BK.includes(w)||P.up.rkt<wLvl(p,w))))return false;
  if(!preview){t.auto=w||null;t.dirty=true;}return true;}
-function upgrade(p,k,x,preview=false){const P=PW[p];if(!P||!P.alive||!UK.includes(k)||P.up[k]>=3)return false;const R=resLands(p,k);if(R.length>=CFG.coopMax)return false;
+function upgrade(p,k,x,preview=false){const P=PW[p];if(!P||!P.alive||!UK.includes(k)||P.up[k]>=3||sanctioned(p))return false;   // под санкциями исследовать нельзя
+const R=resLands(p,k);if(R.length>=CFG.coopMax)return false;
  const t=x||lands(p).filter(t=>!t.job).sort((a,b)=>free(a)-free(b))[0];if(!t||!t.alive||t.owner!==p||t.job)return false;if(preview)return true;
  t.job=R.length?{k:'r',w:k,t:R[0].job.t,dur:R[0].job.dur}:{k:'r',w:k,t:0,dur:upTime(p,k)};t.dirty=true;return true;}
 function capture(p,t,x,preview=false){const P=PW[p];if(!P||!P.alive||!t||!t.alive||t.owner!==-1||t.cap)return false;
@@ -891,12 +988,73 @@ function salvo(p,t,Q){const cov=cover(t)>0;let prev=0;
   /* цель сгорела или сменила хозяина, пока ракета ждала очереди: возвращаем её на склад */
   later(dl,()=>{if(hostile(p,t))launch(p,w,s,t);else if(s.alive&&s.owner===p){s.st[w]++;s.dirty=true;}});});}
 function fire(p,w,t,preview=false){const P=PW[p];if(!P||!P.alive||time<CFG.peace||!t||!hostile(p,t))return false;
- if(w==='*'){const Q=[];for(const s of lands(p))for(const w2 of WK)if(ang(s,t)<=wRange(p,w2))for(let k=0;k<s.st[w2]&&Q.length<CFG.volleyMax;k++)Q.push([s,w2]);
+ {const cf=coalFoe(p);if(cf>=0&&t.owner!==cf)return false;}   // в коалиции бьют только изгоя
+ const ban=sanctioned(p);   // под санкциями ракеты не взлетают, летают только дроны
+ if(w==='*'){const Q=[];for(const s of lands(p))for(const w2 of WK)if(!(ban&&w2!=='d')&&ang(s,t)<=wRange(p,w2))for(let k=0;k<s.st[w2]&&Q.length<CFG.volleyMax;k++)Q.push([s,w2]);
   if(!Q.length)return false;if(preview)return true;for(const [s,w2] of Q){s.st[w2]--;s.dirty=true;}salvo(p,t,Q);return true;}
- if(!WK.includes(w))return false;const s=srcFor(p,w,t);if(!s)return false;if(preview)return true;
+ if(!WK.includes(w)||(ban&&w!=='d'))return false;const s=srcFor(p,w,t);if(!s)return false;if(preview)return true;
  s.st[w]--;s.dirty=true;launch(p,w,s,t);return true;}
+
+/* ================= ЯДЕРНЫЙ УДАР И ОСУЖДЕНИЕ ================= */
+/* Пуск идёт с отсчётом, и его видят все. Удар летит в любом случае: голосование решает только цену.
+   Осудило достаточно держав: пустивший получает санкции, а осудившие входят в коалицию против него.
+   Чем выше эскалация, тем больше голосов нужно: рано жать опасно, на «судном дне» почти безнаказанно. */
+const nukeBy=p=>nukes.find(n=>n.by===p)||null;
+/* кто вправе осуждать пуск державы by: все живые не из её команды */
+const nukeJury=by=>POWERS.map((_,p)=>p).filter(p=>PW[p].alive&&team[p]!==team[by]);
+/* сколько голосов нужно для санкций */
+function nukeNeed(by){
+ const share=CFG.nuke.need[Math.min(escLvl(),CFG.nuke.need.length-1)];
+ return Math.max(1,Math.ceil(nukeJury(by).length*share-1e-9));
+}
+function nukeOrder(p,t,preview=false){
+ const P=PW[p];
+ if(!P||!P.alive||P.nuke<=0||time<CFG.peace||!t||!hostile(p,t)||nukeBy(p))return false;
+ const cf=coalFoe(p);
+ if(cf>=0&&t.owner!==cf)return false;
+ if(preview)return true;
+ P.nuke--;
+ nukes.push({by:p,ti:t.i,t:CFG.nuke.count,votes:[]});
+ fxNet('log',`${POWERS[p].name} готовит ядерный удар: ${t.name} (${POWERS[t.owner].name}). ${CFG.nuke.count} с на осуждение`,'#ff3b3b');
+ /* боты решают не сразу, а по ходу отсчёта */
+ for(const b of nukeJury(p)){
+  if(humans.has(b)||Math.random()>=aiCondemnOdds(b,p,t))continue;
+  later(1+Math.random()*(CFG.nuke.count-3),()=>condemn(b,p));
+ }
+ return true;
+}
+function condemn(p,by,preview=false){
+ const n=nukeBy(by);
+ if(!n||!PW[p]?.alive||team[p]===team[by]||n.votes.includes(p))return false;
+ if(preview)return true;
+ n.votes.push(p);
+ fxNet('log',`${POWERS[p].name} осуждает пуск: голосов ${n.votes.length}, для санкций нужно ${nukeNeed(by)}`,pcol(p));
+ return true;
+}
+function resolveNuke(n){
+ const by=n.by,P=PW[by],t=T[n.ti],name=POWERS[by].name;
+ if(!P.alive)return;
+ if(!hostile(by,t)){P.nuke++;fxNet('log',`${name}: ядерный удар отменён, цели больше нет`,pcol(by));return;}
+ const src=lands(by).sort((a,b)=>ang(a,t)-ang(b,t))[0];
+ const votes=n.votes.filter(p=>PW[p].alive),need=nukeNeed(by);   // считаем до пуска: он сам поднимает эскалацию
+ spawn(by,'n',src,t);
+ escBoost+=CFG.nuke.esc;
+ if(votes.length<need){fxNet('log',`${name}: ядерный удар ушёл. Мир промолчал (${votes.length} из ${need}), санкций нет`,'#ff3b3b');return;}
+ P.sanc=time+CFG.nuke.sanc;
+ for(const p of votes){PW[p].coalFoe=by;PW[p].coalT=time+CFG.nuke.coal;}
+ fxNet('log',`${name} под санкциями на ${CFG.nuke.sanc} с: никаких исследований и ракет, только дроны. Коалиция из ${votes.length} держав бьёт только её`,'#ff3b3b');
+}
+function stepNukes(dt){
+ for(let i=nukes.length-1;i>=0;i--){
+  const n=nukes[i];n.t-=dt;
+  if(n.t>0&&PW[n.by].alive&&hostile(n.by,T[n.ti]))continue;
+  nukes.splice(i,1);resolveNuke(n);
+ }
+}
+
 function doCmd(p,m,preview=false){if(!Number.isInteger(p)||!PW[p]||!m||typeof m!=='object')return false;
  const land=v=>Number.isInteger(v)&&v>=0&&T[v]?T[v]:null,t=land(m.x),s=land(m.s);
+ if(m.c==='nuke')return nukeOrder(p,t,preview);if(m.c==='condemn')return condemn(p,m.x,preview);   // у «осудить» x — номер державы, а не земли
  if(m.c==='scrap')return scrap(p,t,m.w,preview);if(m.c==='clear')return clearStock(p,t,preview);if(m.c==='cancel')return cancelJob(p,t,preview);if(m.c==='auto')return autoBuild(p,t,m.w,preview);
  if(m.c==='buy')return build(p,m.w,s,preview);if(m.c==='up')return upgrade(p,m.w,s,preview);if(m.c==='cap')return capture(p,t,s,preview);if(m.c==='fire')return fire(p,m.w,t,preview);return false;}
 let cmdId=0;const pendingCmd=new Map();
@@ -906,12 +1064,13 @@ async function order(c,w,t,s){if(over||!running||paused)return false;const m={t:
   return new Promise(resolve=>{const timer=setTimeout(()=>{pendingCmd.delete(m.id);resolve(false);},5000);pendingCmd.set(m.id,{resolve,timer});
    try{net.conn.send(m);}catch(e){clearTimeout(timer);pendingCmd.delete(m.id);resolve(false);}});}
  const ok=doCmd(me,m);refreshDock();return ok;}
-function stepWorld(dt){refreshSites();
+function stepWorld(dt){refreshSites();stepNukes(dt);
  POWERS.forEach((_,p)=>{const P=PW[p];if(!P.alive)return;
   if(is(p,'AUS')){P.regen+=dt;if(P.regen>=20){P.regen=0;for(const t of lands(p))if(t.hp<t.maxHp){t.hp=Math.min(t.maxHp,t.hp+1);t.dirty=true;}}}});
  for(const t of T){
   if(!t.alive){if(t.rev>0){t.rev-=dt;if(t.rev<=0&&t.burns<2){t.alive=true;t.owner=-1;t.maxHp=t.hp=Math.round(CFG.zoneHp*CFG.wasteHp);t.slots=CFG.wasteSlots;t.marker.visible=true;t.dirty=true;}}continue;}
-  const j=t.job;if(!j)continue;const p=t.owner;j.t+=j.k==='r'?dt*(1+CFG.coop*(resLands(p,j.w).length-1)):dt;
+  const j=t.job;if(!j)continue;const p=t.owner;if(j.k==='r'&&sanctioned(p))continue;   // санкции замораживают исследования
+  j.t+=j.k==='r'?dt*(1+CFG.coop*(resLands(p,j.w).length-1)):dt;
   if(j.k==='c'){const x=T[j.x];if(!x.alive||!x.cap||x.cap.by!==p){t.job=null;t.dirty=true;continue;}x.cap.t=j.t;}
   if(j.t<j.dur)continue;t.job=null;t.dirty=true;
   if(j.k==='b'){t.st[j.w]++;if(is(p,'CHN')&&++PW[p].nb%3===0&&free(t)>0)t.st[j.w]++;if(p===me)S.click();}
@@ -946,12 +1105,14 @@ function aiLand(p,L){const P=PW[p],foes=T.filter(t=>hostile(p,t));
  return L.st.pvo<2?build(p,'pvo',L):res();}
 /* кого давить: обидчика, сверхдержаву, того, кто уже ранен. Выбрав жертву, бот держится за неё aiFocus секунд. Возвращает державы по убыванию желания */
 function aiFoes(p){const P=PW[p],D=CFG.diff[diff],out=[];
+ {const cf=coalFoe(p);if(cf>=0)return[cf];}   // бот в коалиции бьёт только изгоя
  POWERS.forEach((_,o)=>{if(!PW[o].alive||team[o]===team[p])return;const L=lands(o);if(!L.length)return;
   const hp=L.reduce((a,t)=>a+t.hp,0)/L.reduce((a,t)=>a+t.maxHp,0);
-  out.push([o,(1+P.grudge[o]*CFG.aiRevenge+(o===dom?CFG.dom.focus:0)+1.5*(1-hp))*(humans.has(o)?D.aggro:1)*(o===P.foe&&time<P.foeT?CFG.aiStick:1)*(.85+.3*Math.random())]);});
+  out.push([o,(1+P.grudge[o]*CFG.aiRevenge+(o===dom?CFG.dom.focus:0)+(sanctioned(o)?CFG.nuke.hate:0)+1.5*(1-hp))*(humans.has(o)?D.aggro:1)*(o===P.foe&&time<P.foeT?CFG.aiStick:1)*(.85+.3*Math.random())]);});
  return out.sort((a,b)=>b[1]-a[1]).map(a=>a[0]);}
 /* план удара по земле: чем и в каком порядке бить, чтобы вскрыть щит и добить. list пуст, если удар только зря сожжёт ракеты о купол */
-function strikePlan(p,t,max){const A={};for(const w of WK)A[w]=lands(p).reduce((a,s)=>a+(ang(s,t)<=wRange(p,w)?s.st[w]:0),0);
+function strikePlan(p,t,max){const A={};for(const w of WK)A[w]=sanctioned(p)&&w!=='d'?0:lands(p).reduce((a,s)=>a+(ang(s,t)<=wRange(p,w)?s.st[w]:0),0);   // бот под санкциями бьёт только дронами
+
  const per=dronesPer(t.owner),full=w=>dmgTo(p,w,t)*wCount(p,w),out=[];let cov=cover(t),hp=t.hp,hurt=0;
  while(out.length<max&&hp>0){let w=null;
   if(cov>0){
@@ -970,9 +1131,35 @@ function aiTarget(p,o,max){const P=PW[p];let best=null,bs=-1,bp=null;
   const sc=(1.7-t.hp/t.maxHp)*(pl.kill?2.2:1)*(t.site?1.4:1)*(t.home===o?1.2:1)*(t.i===P.tgt?1.5:1)/(1+.25*cover(t));
   if(sc>bs){bs=sc;best=t;bp=pl.list;}}
  return best&&[best,bp];}
+/* с какой вероятностью бот b осудит ядерный удар державы by по земле t */
+function aiCondemnOdds(b,by,t){
+ const P=PW[b],o=t.owner;
+ if(team[b]===team[o])return 1;                           // бьют по нему или по союзнику
+ if((o===P.foe&&time<P.foeT)||o===dom)return 0;           // бьют его жертву или сверхдержаву: ему это на руку
+ if(by===dom||P.grudge[by]>P.grudge[o]+1)return 1;        // пустил тот, кого бот и так не любит
+ return CFG.nuke.aiVote[diff];                            // чужая ссора: монетка
+}
+/* бот жмёт кнопку, когда его столицу добивают или её уже нет, либо когда по его прикидке мир промолчит */
+function aiNuke(p){
+ const P=PW[p],h=POWERS[p].home;
+ if(P.nuke<=0||nukeBy(p))return false;
+ const panic=!(h.alive&&h.owner===p)||h.hp<h.maxHp*CFG.nuke.aiPanic;
+ if(!panic&&Math.random()>=CFG.nuke.aiFire)return false;
+ const o=aiFoes(p)[0];
+ if(o===undefined)return false;
+ const score=t=>(dmgTo(p,'n',t)>=t.hp?2:1)*(t.home===o?1.5:1)*(t.site?1.4:1)*(1+.1*used(t));
+ const t=lands(o).sort((a,b)=>score(b)-score(a))[0];
+ if(!panic){
+  let votes=0;
+  for(const b of nukeJury(p))votes+=humans.has(b)?(team[b]===team[o]?1:.5):aiCondemnOdds(b,p,t);
+  if(votes>nukeNeed(p)-2)return false;
+ }
+ return nukeOrder(p,t);
+}
 function aiThink(p){const P=PW[p],D=CFG.diff[diff];if(!P.alive)return;
  for(let i=0;i<P.grudge.length;i++)P.grudge[i]*=CFG.aiForget;
  for(const L of lands(p).filter(t=>!t.job).sort(()=>Math.random()-.5).slice(0,2))aiLand(p,L);
+ if(time>=CFG.peace)aiNuke(p);
  if(time<CFG.peace||time<P.atk)return;
  /* с каждым уровнем эскалации залп больше, а пауза между атаками короче */
  const max=Math.min(CFG.volleyMax,D.volley+escLvl());P.need=null;
@@ -987,13 +1174,16 @@ let netAcc=0;
 function netSend(dt,force=false){if(!isHost()||!net.conn.open)return;netAcc+=dt;if(!force&&netAcc<.15)return;netAcc=0;
  net.conn.send({t:'s',time,ended:matchEnded,
   L:T.map(t=>{const j=t.job;return[t.owner,t.alive?1:0,+t.hp.toFixed(1),t.maxHp,t.cap?t.cap.by:-1,t.cap?+t.cap.t.toFixed(1):0,t.cap?t.cap.dur:0,t.slots,t.burns,t.st.d,t.st.t,t.st.m,t.st.i,t.st.h,t.st.pvo,j?j.k:'',j?(j.w||''):'',j&&j.k==='c'?j.x:-1,j?+j.t.toFixed(1):0,j?+j.dur.toFixed(1):0,t.auto];}),
-  W:PW.map(P=>[P.up.eco,P.up.rkt,P.up.pvo,P.up.arm,P.alive?1:0,P.stat.shots,P.stat.icp,P.stat.cap,P.stat.burn]),
+  W:PW.map(P=>[P.up.eco,P.up.rkt,P.up.pvo,P.up.arm,P.alive?1:0,P.stat.shots,P.stat.icp,P.stat.cap,P.stat.burn,P.nuke,+P.sanc.toFixed(1),P.coalFoe,+P.coalT.toFixed(1)]),
+  N:nukes.map(n=>[n.by,n.ti,+n.t.toFixed(1),n.votes]),X:escBoost,
   P:projs.map(q=>[q.id,q.w,q.si,q.ti,+q.t.toFixed(3),q.dur,q.owner,q.k,q.ph,q.off,q.ic&&q.ic.ok?1:0]),E:netEv.splice(0)});}
 function applySnap(m){time=m.time;
  m.L.forEach((a,i)=>{const t=T[i],key=a.slice(0,4).join()+'|'+a.slice(7,17).join()+'|'+a[20];if(t.sk!==key){t.sk=key;t.dirty=true;}
   t.owner=a[0];if(t.alive!==!!a[1]){t.alive=!!a[1];t.marker.visible=t.alive;}t.hp=a[2];t.maxHp=a[3];t.cap=a[4]>=0?{by:a[4],t:a[5],dur:a[6]}:null;
   t.slots=a[7];t.burns=a[8];t.st={d:a[9],t:a[10],m:a[11],i:a[12],h:a[13],pvo:a[14]};t.job=a[15]?{k:a[15],w:a[16],x:a[17],t:a[18],dur:a[19]}:null;t.auto=a[20]||null;});
- m.W.forEach((a,i)=>{const P=PW[i];P.up={eco:a[0],rkt:a[1],pvo:a[2],arm:a[3]};P.alive=!!a[4];if(a.length>8)P.stat={shots:a[5],icp:a[6],cap:a[7],burn:a[8]};});refreshSites();
+ m.W.forEach((a,i)=>{const P=PW[i];P.up={eco:a[0],rkt:a[1],pvo:a[2],arm:a[3]};P.alive=!!a[4];if(a.length>8)P.stat={shots:a[5],icp:a[6],cap:a[7],burn:a[8]};
+  if(a.length>12){P.nuke=a[9];P.sanc=a[10];P.coalFoe=a[11];P.coalT=a[12];}});refreshSites();
+ nukes.length=0;for(const a of m.N||[])nukes.push({by:a[0],ti:a[1],t:a[2],votes:a[3]});escBoost=m.X||0;
  const seen=new Set();
  for(const d of m.P){seen.add(d[0]);const q=projs.find(q=>q.id===d[0]);
   if(!q)mkProj({id:d[0],w:d[1],si:d[2],ti:d[3],t:d[4],dur:d[5],owner:d[6],k:d[7],ph:d[8],off:d[9],sv:!!d[10]});else{q.sv=!!d[10];if(Math.abs(q.t-d[4])>.03)q.t=d[4];}}
@@ -1090,26 +1280,63 @@ const rangeTxt=r=>r>3?'вся планета':r>1.2?'дальняя':r>.7?'ср�
 function buildDock(){
  $('dock').innerHTML=`<div id="en" data-t="земли без дела. Дай им приказ: строить, захватывать или исследовать"><b class="mono">0</b><small class="mono">свободно</small></div><span class="sep"></span>`
   +BK.map(w=>`<button class="wb" data-buy="${w}" style="color:${WCOL[w]}" aria-label="строить: ${w==='pvo'?'щит':WPN[w].n}">${IC[w]}<b class="cnt mono z">0</b><span class="lbl mono">${w==='pvo'?'ЩИТ':WPN[w].s}</span><span class="cost mono"></span></button>`).join('')
-  +`<span class="sep"></span>`+UK.map(k=>`<button class="ub" data-up="${k}" aria-label="исследовать: ${UP[k].n}">${IC[k==='pvo'?'rad':k]}<span class="pips"><i></i><i></i><i></i></span><span class="cost mono"></span></button>`).join('');
+  +`<span class="sep"></span>`+UK.map(k=>`<button class="ub" data-up="${k}" aria-label="исследовать: ${UP[k].n}">${IC[k==='pvo'?'rad':k]}<span class="pips"><i></i><i></i><i></i></span><span class="cost mono"></span></button>`).join('')
+  +`<span class="sep"></span><button class="nkb" id="bnuke" aria-label="ядерный удар" data-t="Ядерный удар (клавиша N): нажми и выбери вражескую землю. Он один на весь матч">${IC.ura}<b class="cnt mono">0</b><span class="lbl mono">ЯДЕР</span><span class="cost mono"></span></button>`;
  $('misc').innerHTML=`<button class="ib" id="bhelp" aria-label="обучение" data-t="обучение заново. Клавиши: WASD или стрелки крутят глобус, Q/E зум, Tab по своим землям, Enter меню земли, 1–6 стройка и огонь, G сигнал, V купола, пробел пауза">${IC.help}</button><button class="ib" id="bpause" aria-label="пауза" data-t="пауза (пробел)">${IC.pause}</button><button class="ib" id="bsnd" aria-label="звук" data-t="звук">${IC.snd}</button><button class="ib" id="bpvo" aria-label="купола щитов" data-t="купола щитов: показывать всегда или только по делу (V)" style="color:#38bdf8">${IC.pvo}</button><button class="ib" id="bping" aria-label="сигнал союзникам" data-t="сигнал союзникам: нажми и ткни в глобус. Быстрее: Alt+клик, клик колёсиком или клавиша G">${IC.ping}</button>`;
  $('bping').onclick=()=>setPing(!pingMode);
  $('bpause').onclick=()=>{if(isGuest())return;paused=!paused;$('bpause').innerHTML=paused?IC.play:IC.pause;if(isHost())net.conn.send({t:'pause',v:paused});};
  $('bsnd').innerHTML=mute?IC.mute:IC.snd;$('bsnd').onclick=()=>{mute=!mute;if(master)master.gain.setTargetAtTime(mute?0:AUDIO_LEVEL,AC.currentTime,.012);$('bsnd').innerHTML=mute?IC.mute:IC.snd;};
  $('bpvo').onclick=togglePvo;$('bpvo').classList.toggle('on',showPvo);
- $('bhelp').onclick=()=>{tut.step=0;tut.on=true;showCoach();};}
+ $('bhelp').onclick=()=>{tut.step=0;tut.on=true;tutProgressReset();showCoach();};}
 function refreshDock(){if(!running)return;const P=PW[me],mine=lands(me),idle=mine.filter(t=>!t.job),room=idle.some(t=>free(t)>0);
  $('en').firstChild.textContent=idle.length;$('en').classList.toggle('hot',idle.length>0);
  document.querySelectorAll('.wb').forEach(b=>{const w=b.dataset.buy,n=total(me,w),lock=P.up.rkt<wLvl(me,w),run=mine.some(t=>t.job&&t.job.k==='b'&&t.job.w===w);
   b.querySelector('.cnt').textContent=n;b.querySelector('.cnt').classList.toggle('z',!n);b.querySelector('.cost').textContent=lock?'закрыто':Math.round(wTime(me,w))+'с';
   b.classList.toggle('lock',lock);b.classList.toggle('off',lock||!room);b.classList.toggle('run',run);});
  document.querySelectorAll('.ub').forEach(b=>{const k=b.dataset.up,l=P.up[k],R=resLands(me,k),j=R[0];b.querySelectorAll('.pips i').forEach((x,i)=>x.classList.toggle('on',i<l));
-  b.querySelector('.cost').textContent=l>=3?'макс':j?Math.round(j.job.t/j.job.dur*100)+'%'+(R.length>1?' ×'+R.length:''):Math.round(upTime(me,k))+'с';b.classList.toggle('off',l>=3||R.length>=CFG.coopMax||!idle.length);b.classList.toggle('run',!!j);});}
+  b.querySelector('.cost').textContent=sanctioned(me)&&l<3?'санкции':l>=3?'макс':j?Math.round(j.job.t/j.job.dur*100)+'%'+(R.length>1?' ×'+R.length:''):Math.round(upTime(me,k))+'с';b.classList.toggle('off',l>=3||R.length>=CFG.coopMax||!idle.length||sanctioned(me));b.classList.toggle('run',!!j);});
+ /* кнопка ядерного удара: сколько в запасе и что с ним сейчас */
+ {const b=$('bnuke'),n=nukeBy(me);
+  if(b){b.querySelector('.cnt').textContent=P.nuke;b.querySelector('.cnt').classList.toggle('z',!P.nuke);
+   b.querySelector('.cost').textContent=n?Math.ceil(n.t)+'с':P.nuke<=0?'нет':time<CFG.peace?'мир':'готов';
+   b.classList.toggle('off',P.nuke<=0||!!n||time<CFG.peace);}}}
+/* памятка: что будет, если нажать. Висит, пока включён прицел. Цифры живые: зависят от эскалации и числа живых держав */
+function nukeHelpHtml(){
+ const need=nukeNeed(me),all=nukeJury(me).length;
+ return `<b>ЯДЕРНЫЙ УДАР · выбери вражескую землю</b>
+ <p><i>1</i>Клик по земле врага запускает отсчёт ${CFG.nuke.count} с. Его видят все.</p>
+ <p><i>2</i>Удар летит в любом случае. Урон ${wDmg(me,'n')}, щит не сбивает. Обычная земля сгорит и останется выжженной навсегда, столица выживет.</p>
+ <p><i>3</i>Пока идёт отсчёт, другие державы могут тебя осудить. Сейчас для санкций нужно <u>${need} из ${all}</u>.</p>
+ <p><i>4</i>Осудили: ${CFG.nuke.sanc} с без исследований и без ракет (летают только дроны), а осудившие всё это время бьют только тебя и в ${CFG.nuke.coalDmg} раза сильнее.</p>
+ <p><i>5</i>Не осудили: бесплатно. Чем выше эскалация, тем больше голосов нужно, а каждый ядерный удар поднимает её на уровень.</p>
+ <small>Esc или кнопка ещё раз: отмена. Удар один на весь матч.</small>`;
+}
+/* режим прицела: нажал кнопку ядерного удара, следующий клик по вражеской земле начинает отсчёт */
+let nukeMode=false;
+function setNuke(v){nukeMode=v;$('bnuke')?.classList.toggle('on',v);document.body.classList.toggle('nukemode',v);
+ const h=$('nukehelp');h.style.display=v?'block':'none';if(v){h.innerHTML=nukeHelpHtml();closeRadial();}}
+function toggleNuke(){
+ if(nukeMode){setNuke(false);return;}
+ if(!running||over)return;
+ const why=!PW[me].alive?'держава сгорела'
+  :time<CFG.peace?`перемирие: ещё ${Math.ceil(CFG.peace-time)} с`
+  :nukeBy(me)?'твой ядерный удар уже на отсчёте'
+  :PW[me].nuke<=0?'ядерный удар уже потрачен':'';
+ if(why){S.no();showWhy(why,$('bnuke'));return;}
+ S.click();setPing(false);setNuke(true);
+}
+async function aimNuke(t){
+ setNuke(false);
+ if(!t||!hostile(me,t)){S.no();showWhy('ядерный удар отменён: нужна вражеская земля',$('bnuke'));return;}
+ if(await order('nuke','',t)){S.buy();hudT=0;}else{S.no();showWhy(whyOrder('nuke','',t,null),$('bnuke'));}
+}
 function tipHtml(el){const P=PW[me];
  if(el.dataset.buy){const w=el.dataset.buy;if(w==='pvo')return`<b>Щит</b>Купол над землёй и соседями, сбивает всегда. 1 заряд на ракету, 2 на МБР, один заряд на ${dronesPer(me)} дрона. Гиперзвук проходит.<small>купол видно на глобусе · строится ${Math.round(wTime(me,w))} с · занимает ячейку</small>`;
   const lock=P.up.rkt<wLvl(me,w);return`<b>${WPN[w].n}</b>${WPN[w].desc}<small>урон ${wDmg(me,w)}${w==='d'?' × '+wCount(me,w):''} · дальность: ${rangeTxt(wRange(me,w))} · строится ${Math.round(wTime(me,w))} с${lock?' · нужна ракетная программа '+wLvl(me,w):''}</small>`;}
  if(el.dataset.up){const k=el.dataset.up;return`<b>${UP[k].n}</b>${UP[k].desc}<small>уровень ${P.up[k]} из 3 · можно подключить до ${CFG.coopMax} земель: каждая лишняя ускоряет на ${Math.round(CFG.coop*100)}%, но ничего не строит</small>`;}
  if(el.dataset.t)return el.dataset.t;return'';}
 function showTip(el){const tip=$('tip');if(!el){tip.style.display='none';hovW=null;return;}
+ const w=$('why');if(w)w.style.display='none';
  tip.innerHTML=tipHtml(el);tip.style.display='block';const r=el.getBoundingClientRect(),tw=tip.offsetWidth,th=tip.offsetHeight;
  tip.style.left=Math.max(8,Math.min(innerWidth-tw-8,r.left+r.width/2-tw/2))+'px';tip.style.top=(r.top-th-10<8?r.bottom+10:r.top-th-10)+'px';
  hovW=el.dataset.buy||el.dataset.w||null;}
@@ -1117,8 +1344,10 @@ document.addEventListener('mouseover',e=>showTip(e.target.closest('[data-buy],[d
 document.addEventListener('focusin',e=>{if(e.target.closest&&e.target.closest('#radial'))showTip(e.target.closest('[data-t]'));});
 let hovW=null;
 $('dock').addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;
- const ok=await(b.dataset.buy?order('buy',b.dataset.buy):order('up',b.dataset.up));if(ok){S.buy();tutEvent(b.dataset.buy?(b.dataset.buy==='pvo'?'pvo':'buy'):'up');}
- else{S.no();if(!lands(me).some(t=>!t.job))log('все земли заняты: кликни по своей земле и отмени дело крестиком','#fde047');else if(b.dataset.buy&&PW[me].up.rkt>=wLvl(me,b.dataset.buy))log('склад полон: кликни по своей земле и спиши лишнее кнопкой «−1»','#fde047');}});
+ if(b.id==='bnuke'){toggleNuke();return;}
+ const c=b.dataset.buy?'buy':'up',w=b.dataset.buy||b.dataset.up;
+ const ok=await order(c,w);if(ok)S.buy();
+ else{S.no();showWhy(whyOrder(c,w,null,null),b);}});
 
 /* --- круговое меню: кликнул по земле, выбрал чем --- */
 let radT=null,radKey='',radExt=130,radWs=[],radAll=false,lastW=null;   // lastW: чем стреляли в прошлый раз (ПКМ по врагу повторяет)
@@ -1136,12 +1365,12 @@ function placeRadial(){if(!radT)return;
  $('radial').style.transform=`translate(${rx.toFixed(1)}px,${ry.toFixed(1)}px)`;}
 const radP=new THREE.Vector3();
 function openRadial(t,p,re){const R=$('radial'),P=PW[me];let items=[];if(p)radP.copy(p).normalize();else if(radT!==t)radP.copy(t.pos).normalize();
- if(hostile(me,t)){if(time<CFG.peace){log('перемирие: стрелять пока нельзя','#fde047');S.no();return;}
+ if(hostile(me,t)){if(time<CFG.peace){showWhy(`перемирие: ещё ${Math.ceil(CFG.peace-time)} с`,$('clock'));S.no();return;}
   /* re: меню перерисовано после пуска. Набор кнопок тот же, чтобы они не прыгали под курсором, пока кликаешь серию */
   const ws=re?radWs:WK.filter(w=>total(me,w)>0);
   items=ws.map(w=>{const n=lands(me).filter(s=>ang(s,t)<=wRange(me,w)).reduce((a,s)=>a+s.st[w],0);
    return{c:'fire',w,col:WCOL[w],off:!n,n:n||total(me,w),tip:`${WPN[w].n}: ${n?'урон '+wDmg(me,w)+(wCount(me,w)>1?' × '+wCount(me,w):''):'отсюда не достаёт, смотри кольцо'}`};});
-  if(!items.length){if(re)return closeRadial();log('нечем стрелять: построй оружие','#fde047');S.no();pulse('.wb[data-buy="t"]');return;}
+  if(!items.length){if(re)return closeRadial();showWhy('нечем стрелять: построй оружие',document.querySelector('.wb[data-buy="t"]'));S.no();pulse('.wb[data-buy="t"]');return;}
   const all=items.reduce((a,i)=>a+(i.off?0:i.n),0);if(re&&all<1)return closeRadial();
   if(re?radAll:all>1)items.push({c:'fire',w:'*',off:all<1,n:Math.min(all,CFG.volleyMax),tip:'залп: всё, что достаёт. Если цель под щитом, дроны и лёгкие ракеты уйдут первыми, тяжёлые следом'});
   if(!re){radWs=ws;radAll=all>1;}}
@@ -1153,7 +1382,7 @@ function openRadial(t,p,re){const R=$('radial'),P=PW[me];let items=[];if(p)radP.
    tip:`${UP[k].n} ${l}/3: ${l>=3?'максимум':busy?'земля занята делом':n?'подключить эту землю к исследованию (уже работают: '+n+'), пойдёт быстрее':'исследовать '+Math.round(upTime(me,k))+' с'}`});}
   if(busy)items.push({c:'cancel',ic:'x',cls:'res',n:Math.ceil(t.job.dur-t.job.t),tip:'отменить: '+jobTxt(t)+'. Прогресс пропадёт'});}
  else if(t.owner===-1&&t.alive){
-  if(t.cap){log(t.cap.by===me?'уже захватываешь':'эту землю уже забирают','#fde047');return;}
+  if(t.cap){showWhy(t.cap.by===me?'ты уже захватываешь эту землю':'эту землю уже забирают',document.querySelector('.wb[data-buy="t"]'));return;}
   const src=capSources(me,t).slice(0,3);
   items=src.length?src.map(s=>{const d=Math.ceil(capDuration(me,s,t));return{c:'cap',s:s.i,n:d,tip:`${t.adj.includes(s)?'захват':'морская высадка'}: ${t.name} · из ${s.name} · ${d} с${t.site?' · '+SITE[t.site].n+': '+SITE[t.site].desc:''}`};})
    :[{c:'cap',off:true,n:'—',tip:[...t.adj,...t.sea].some(s=>s.alive&&s.owner===me)?'твоя земля у границы занята делом: дождись конца или отмени его':'далеко: нужна своя земля у сухопутной или морской границы'}];}
@@ -1165,38 +1394,140 @@ function openRadial(t,p,re){const R=$('radial'),P=PW[me];let items=[];if(p)radP.
   const ex=it.c!=='buy'?'':(it.n>0?`<button class="rs sc" style="left:${(cs*(rad-45)).toFixed(1)}px;top:${(sn*(rad-45)).toFixed(1)}px;animation-delay:${k*22}ms" data-c="scrap" data-w="${it.w}" data-t="списать 1 шт. (${it.nm}): ячейка освободится сразу" aria-label="списать: ${it.nm}">−1</button>`:'')
    +(it.lock?'':`<button class="rs au${on?' on':''}" style="left:${(cs*(rad+45)).toFixed(1)}px;top:${(sn*(rad+45)).toFixed(1)}px;animation-delay:${k*22}ms" data-c="auto" data-w="${it.w}" data-on="${on?1:''}" data-t="автоповтор (${it.nm}): ${on?'включён. Нажми, чтобы выключить':'земля будет строить это снова и снова, пока есть ячейки'}" aria-label="автоповтор: ${it.nm}">↻</button>`);
   return ex+`<button class="rb${it.c==='fire'?'':' cap'}${it.cls?' '+it.cls:''}${it.off?' off':''}" style="left:${rx.toFixed(1)}px;top:${ry.toFixed(1)}px;animation-delay:${k*22}ms${it.col?';color:'+it.col:''}" data-c="${it.c}" data-w="${it.w||''}" data-s="${it.s??-1}" data-t="${it.tip}" aria-label="${it.tip}">${IC[it.ic||(it.c==='cap'?'cap':it.w==='*'?'all':it.w)]}<b class="mono">${it.n}</b></button>`;}).join('');}
-$('radial').addEventListener('click',async e=>{const b=e.target.closest('.rb,.rs');if(!b||!radT)return;if(b.classList.contains('off')){S.no();return;}
+$('radial').addEventListener('click',async e=>{const b=e.target.closest('.rb,.rs');if(!b||!radT)return;if(b.classList.contains('off')){S.no();showWhy(b.dataset.t||'сейчас нельзя',b);return;}
  const t=radT,c=b.dataset.c,w=b.dataset.w,s=T[+b.dataset.s]||null;
  /* маленькие кнопки (списать, автоповтор) и огонь меню не закрывают: можно накликать серию пусков подряд */
  if(b.classList.contains('rs')||c==='fire'){const ix=[...$('radial').querySelectorAll('.rb,.rs')].indexOf(b),kb=document.activeElement===b;
   if(await order(c,c==='auto'&&b.dataset.on?'':w,t)){S.click();
-   if(c==='fire'){lastW=w;tutEvent('fire');if(w==='*'&&cover(t)>0)log('залп: дроны и лёгкие ракеты вскрывают щит, тяжёлые идут следом','#fde047');}}
-  else S.no();$('tip').style.display='none';
+   if(c==='fire'){lastW=w;if(w==='*'&&cover(t)>0)log('залп: дроны и лёгкие ракеты вскрывают щит, тяжёлые идут следом','#fde047');}}
+  else{S.no();showWhy(whyOrder(c,w,t,s),b);}$('tip').style.display='none';
   if(radT===t){openRadial(t,null,c==='fire');if(radT&&kb){const B=$('radial').querySelectorAll('.rb,.rs');(B[ix]||B[0])?.focus();}}return;}
- closeRadial();$('tip').style.display='none';hovW=null;
- const own=c==='buy'||c==='up';
- if(await order(c,w,own?null:t,own?t:s)){c==='fire'?S.click():S.buy();tutEvent(c==='buy'?(w==='pvo'?'pvo':'buy'):c);}else S.no();});
+ const own=c==='buy'||c==='up',ok=await order(c,w,own?null:t,own?t:s);
+ if(ok){c==='fire'?S.click():S.buy();}else{S.no();showWhy(whyOrder(c,w,t,s),b);}
+ closeRadial();$('tip').style.display='none';hovW=null;});
 const pulse=sel=>{const el=document.querySelector(sel);if(!el)return;el.classList.add('pulse');setTimeout(()=>el.classList.remove('pulse'),2400);};
 
-/* --- обучение: короткие шаги, можно пропустить --- */
+/* --- обучение: короткие шаги, можно пропустить. Шаг засчитывается по результату, а не по клику --- */
 const TUT=[
  {t:'Это твоя держава. Значки под землёй: что лежит на складе. Пустые квадраты: свободные ячейки.',next:true},
- {t:'Нажми на ракету внизу: свободная земля начнёт её строить.',on:'buy',hl:'.wb[data-buy="t"]'},
- {t:'Земля делает одно дело за раз. Когда ракета достроится, кликни по серой земле рядом и захвати её.',on:'cap'},
- {t:'Кликни по своей земле и поставь в неё щит. Он сам сбивает то, что летит рядом.',on:'pvo'},
- {t:'Когда кончится перемирие: клик по врагу, потом выбери оружие. Меню не закрывается: жми ещё и ещё.'+(COARSE?'':' Правая кнопка по врагу повторяет прошлый пуск.'),on:'fire'},
- {t:'Справа исследования. Жми ещё раз, чтобы подключить вторую и третью землю: пойдёт быстрее.',on:'up',hl:'.ub[data-up="rkt"]'},
+ {t:'Нажми на ракету внизу: свободная земля начнёт её строить. Шаг засчитается, когда ракета будет готова.',prog:'buildT',hl:'.wb[data-buy="t"]'},
+ {t:'Земля делает одно дело за раз. Когда ракета достроится, кликни по серой земле рядом и дождись конца захвата.',prog:'cap'},
+ {t:'Кликни по своей земле и поставь в неё щит. Он сам сбивает то, что летит рядом. Дождись постройки.',prog:'buildPvo'},
+ {t:'Когда кончится перемирие: клик по врагу, потом выбери оружие. Меню не закрывается: жми ещё и ещё.'+(COARSE?'':' Правая кнопка по врагу повторяет прошлый пуск.'),prog:'fire'},
+ {t:'Справа исследования. Жми ещё раз, чтобы подключить вторую землю: пойдёт быстрее. Шаг засчитается, когда над проектом будут работать две земли.',prog:'coop',hl:'.ub[data-up="rkt"]'},
  {t:'Клик по своей земле: круговое меню. У оружия «−1» списывает штуку и освобождает ячейку, «↻» включает автоповтор, крестик отменяет дело.',next:true},
+ {t:'Красная кнопка в конце панели: ядерный удар, один на весь матч. Нажми её и прочитай памятку, она всё объяснит. Коротко: удар летит всегда, но если тебя осудит достаточно держав, останешься без исследований и ракет. Чем позже жмёшь, тем это дешевле.',next:true,hl:'#bnuke'},
  {t:'Золотые ромбы на карте: особые объекты. Космодром, рудник, радар, завод, бункер, хаб. Захвати землю, и бонус твой. Боты тоже за ними идут.',next:true},
  COARSE?{t:'Один палец крутит глобус, два пальца приближают. Красная плашка сверху: по тебе летит, тапни по ней, и камера покажет куда. Кнопка «!» слева: сигнал союзникам.',next:true}
   :{t:'С клавиатуры: WASD или стрелки крутят глобус, Q/E зум, Tab по своим землям, Enter меню земли. G или Alt+клик: сигнал союзникам.',next:true}];
-const tut={step:0,on:false};
-function showCoach(){const c=$('coach');document.querySelectorAll('.pulse').forEach(x=>x.classList.remove('pulse'));
- if(!tut.on||tut.step>=TUT.length){c.style.display='none';tut.on=false;try{localStorage.setItem('zarevo_tut','1');}catch(e){}return;}
- const s=TUT[tut.step];c.style.display='flex';c.querySelector('.n').textContent=`${tut.step+1}/${TUT.length}`;c.querySelector('.t').textContent=s.t;
- $('cnext').style.display=s.next?'':'none';if(s.hl){const el=document.querySelector(s.hl);if(el)el.classList.add('pulse');}}
-function tutEvent(name){if(tut.on&&TUT[tut.step]&&TUT[tut.step].on===name){tut.step++;showCoach();}}
-$('cnext').onclick=()=>{tut.step++;showCoach();};$('cskip').onclick=()=>{tut.on=false;showCoach();};
+const tut={step:0,on:false,base:null,prog:null,prev:null,doneAt:0};
+function tutProgressReset(){
+ const mine=lands(me),P=PW[me];
+ tut.base={ids:new Set(mine.map(t=>t.i)),st:new Map(mine.map(t=>[t.i,{...t.st}])),rkt:P.up.rkt,shots:P.stat?.shots||0};
+ tut.prog={buildT:false,buildPvo:false,cap:false,fire:false,coop:false};
+ tut.prev=new Map(mine.map(t=>[t.i,t.job?{...t.job}:null]));tut.doneAt=0;
+}
+function tutTick(){
+ if(!tut.on||!tut.base||!running||paused||over||matchEnded)return;
+ const P=PW[me];if(!P?.alive)return;
+ for(const t of lands(me)){
+  const b=tut.base.st.get(t.i);
+  if(b){
+   if(t.st.t>b.t)tut.prog.buildT=true;if(t.st.pvo>b.pvo)tut.prog.buildPvo=true;
+   const pj=tut.prev.get(t.i),cj=t.job;
+   if(pj&&pj.k==='b'&&pj.dur>0&&pj.t>=pj.dur*.7&&(!cj||cj.k!=='b'||cj.w!==pj.w)){
+    if(pj.w==='t')tut.prog.buildT=true;if(pj.w==='pvo')tut.prog.buildPvo=true;}
+   tut.prev.set(t.i,cj?{...cj}:null);
+  }else{tut.base.st.set(t.i,{...t.st});tut.prev.set(t.i,t.job?{...t.job}:null);}
+  if(!tut.base.ids.has(t.i))tut.prog.cap=true;
+ }
+ if(P.up.rkt>tut.base.rkt)tut.prog.coop=true;
+ if(resLands(me,'rkt').length>=2)tut.prog.coop=true;
+ if((P.stat?.shots||0)>tut.base.shots)tut.prog.fire=true;
+ const s=TUT[tut.step];if(!s||!s.prog)return;
+ if(!tut.prog[s.prog]){tut.doneAt=0;return;}
+ const now=performance.now();if(!tut.doneAt)tut.doneAt=now;
+ if(now-tut.doneAt>800){tut.step++;tut.doneAt=0;showCoach();}
+}
+function tutStatus(s){
+ if(!s.prog)return '';if(tut.prog?.[s.prog])return 'готово';
+ if(s.prog==='buildT'||s.prog==='buildPvo'){const w=s.prog==='buildT'?'t':'pvo';
+  const t=lands(me).find(t=>t.job&&t.job.k==='b'&&t.job.w===w);
+  return t?`ещё ${Math.max(1,Math.ceil(t.job.dur-t.job.t))} с`:w==='t'?'построй ракету':'построй щит';}
+ if(s.prog==='cap'){const t=T.find(t=>t.cap&&t.cap.by===me);
+  return t?`захват ${Math.max(1,Math.ceil(t.cap.dur-t.cap.t))} с`:'выбери серую землю';}
+ if(s.prog==='fire')return time<CFG.peace?`перемирие ${Math.ceil(CFG.peace-time)} с`:'выстрели по врагу';
+ if(s.prog==='coop'){const n=resLands(me,'rkt').length;return n>=2?'готово':n?'ещё одна земля':'начни исследование';}
+ return '';
+}
+function showCoach(){const c=$('coach'),w=$('why');if(w)w.style.display='none';document.querySelectorAll('.pulse').forEach(x=>x.classList.remove('pulse'));
+ if(!tut.on||tut.step>=TUT.length){c.style.display='none';tut.on=false;tut.base=null;try{localStorage.setItem('zarevo_tut','1');}catch(e){}return;}
+ const s=TUT[tut.step];c.style.display='flex';c.classList.toggle('anchored',!!s.hl);c.querySelector('.n').textContent=`${tut.step+1}/${TUT.length}`;c.querySelector('.t').textContent=s.t;
+ c.classList.toggle('ok',!!tut.prog?.[s.prog]);
+ $('cnext').style.display=s.next?'':'none';if(s.hl){const el=document.querySelector(s.hl);if(el)el.classList.add('pulse');}
+ placeCoach();}
+function updateCoach(){const c=$('coach');if(!c||c.style.display==='none'||!tut.on)return;const s=TUT[tut.step];if(!s)return;
+ const st=tutStatus(s);c.querySelector('.n').textContent=`${tut.step+1}/${TUT.length}${st?' · '+st:''}`;c.classList.toggle('ok',!!tut.prog?.[s.prog]);placeCoach();}
+function bottomStackTop(){let top=innerHeight;
+ for(const id of ['dock','misc','abil','sitebar']){const el=$(id);if(!el)continue;const r=el.getBoundingClientRect();if(r.width<2||r.height<2)continue;
+  const cs=getComputedStyle(el);if(cs.display==='none'||cs.visibility==='hidden')continue;top=Math.min(top,r.top);}
+ return top;}
+function rectHit(r,x,y,w,h){return x<r.right&&x+w>r.left&&y<r.bottom&&y+h>r.top;}
+function placeCoach(){const c=$('coach');if(!c||c.style.display==='none')return;const s=TUT[tut.step],anchor=s?.hl?document.querySelector(s.hl):null;
+ const cr=c.getBoundingClientRect();let left,top,tail=cr.width/2,noTail=false;
+ if(anchor){const r=anchor.getBoundingClientRect();left=r.left+r.width/2-cr.width/2;top=r.top-cr.height-12;
+  if(top<8){top=r.bottom+12;c.classList.add('below');}else c.classList.remove('below');tail=r.left+r.width/2-left;
+  /* не закрываем нижние кнопки: сначала сдвигаем вбок, иначе поднимаем над всей нижней панелью */
+  const obs=['misc','abil','sitebar'].map(id=>$(id)).filter(el=>{if(!el)return false;const b=el.getBoundingClientRect();const cs=getComputedStyle(el);
+   return b.width>2&&b.height>2&&cs.display!=='none'&&cs.visibility!=='hidden';}).map(el=>el.getBoundingClientRect());
+  if(obs.some(o=>rectHit(o,left,top,cr.width,cr.height))){
+   const block=obs.filter(o=>rectHit(o,left,top,cr.width,cr.height));
+   const rightEdge=Math.max(...block.map(o=>o.right))+8,leftEdge=Math.min(...block.map(o=>o.left))-8-cr.width;
+   if(rightEdge+cr.width<=innerWidth-8)left=rightEdge;else if(leftEdge>=8)left=leftEdge;
+   tail=r.left+r.width/2-left;
+   if(obs.some(o=>rectHit(o,left,top,cr.width,cr.height))){top=Math.min(...obs.map(o=>o.top))-cr.height-8;noTail=true;c.classList.remove('below');}
+  }
+ }
+ else{left=innerWidth/2-cr.width/2;top=bottomStackTop()-cr.height-12;noTail=true;c.classList.remove('below');}
+ left=Math.max(8,Math.min(innerWidth-cr.width-8,left));top=Math.max(8,Math.min(innerHeight-cr.height-8,top));
+ c.style.left=left+'px';c.style.top=top+'px';c.style.bottom='auto';c.style.transform='none';
+ c.classList.toggle('noTail',noTail);if(!noTail)c.style.setProperty('--tail',Math.max(14,Math.min(cr.width-14,tail))+'px');}
+if(document.fonts?.ready)document.fonts.ready.then(()=>{if(tut.on)placeCoach();});
+let whyTimer=0;
+function showWhy(text,anchor){if(!text)return;const el=$('why');if(!el)return;showTip(null);el.textContent=text;el.style.display='block';
+ const r=el.getBoundingClientRect(),ar=anchor&&anchor.getBoundingClientRect?anchor.getBoundingClientRect():null;let left,top;
+ if(ar){left=ar.left+ar.width/2-r.width/2;top=ar.top-r.height-10;if(top<8)top=ar.bottom+10;}
+ else{const d=$('dock'),dr=d?d.getBoundingClientRect():null;left=innerWidth/2-r.width/2;top=dr&&dr.height?dr.top-r.height-10:innerHeight-r.height-24;}
+ const c=$('coach');if(c&&c.style.display!=='none'){const cr=c.getBoundingClientRect();if(top+r.height>cr.top&&top<cr.bottom&&left+r.width>cr.left&&left<cr.right){top=cr.top-r.height-8;if(top<8)top=cr.bottom+8;}}
+ left=Math.max(8,Math.min(innerWidth-r.width-8,left));top=Math.max(8,Math.min(innerHeight-r.height-8,top));
+ el.style.left=left+'px';el.style.top=top+'px';clearTimeout(whyTimer);whyTimer=setTimeout(()=>{el.style.display='none';},2800);}
+function whyBuild(w,t){const P=PW[me];if(!P?.alive)return 'держава сгорела';if(P.up.rkt<wLvl(me,w))return `нужна ракетная программа ${wLvl(me,w)}`;
+ if(t){if(t.owner!==me)return 'это уже не твоя земля';if(t.job)return `земля занята: ${jobTxt(t)}`;if(free(t)<=0)return 'нет свободных ячеек: спиши лишнее кнопкой «−1»';}
+ else{const idle=lands(me).filter(x=>!x.job);if(!idle.length)return 'все земли заняты: отмени дело крестиком';if(!idle.some(x=>free(x)>0))return 'нет свободных ячеек: спиши лишнее кнопкой «−1»';}
+ return 'не получилось: попробуй ещё раз';}
+function whyUp(k,t){const P=PW[me];if(!P?.alive)return 'держава сгорела';if(sanctioned(me))return `санкции: исследования заморожены ещё на ${Math.ceil(P.sanc-time)} с`;if(P.up[k]>=3)return `${UP[k].n}: максимальный уровень`;if(resLands(me,k).length>=CFG.coopMax)return `уже ${CFG.coopMax} земли на этом исследовании`;
+ if(t){if(t.owner!==me)return 'это уже не твоя земля';if(t.job)return `земля занята: ${jobTxt(t)}`;}
+ else if(!lands(me).some(x=>!x.job))return 'все земли заняты: отмени дело крестиком';
+ return 'не получилось: попробуй ещё раз';}
+function whyFire(w,t){if(time<CFG.peace)return `перемирие: ещё ${Math.ceil(CFG.peace-time)} с`;if(!t||!t.alive)return 'цель уже сгорела';if(!hostile(me,t))return 'цель уже не враг';
+ {const cf=coalFoe(me);if(cf>=0&&t.owner!==cf)return `ты в коалиции против: ${POWERS[cf].name}. Ещё ${Math.ceil(PW[me].coalT-time)} с по другим стрелять нельзя`;}
+ if(sanctioned(me)&&w!=='d'&&w!=='n')return `санкции: ещё ${Math.ceil(PW[me].sanc-time)} с ракеты не взлетают, летают только дроны`;
+ if(w==='n')return PW[me].nuke<=0?'ядерный удар уже потрачен':nukeBy(me)?'твой ядерный удар уже на отсчёте':'не получилось: попробуй ещё раз';
+ if(w==='*'){let any=false;for(const s of lands(me))for(const k of WK)if(s.st[k]>0&&ang(s,t)<=wRange(me,k))any=true;if(!any)return 'ничего не достаёт: подойди ближе или построй дальнее оружие';}
+ else{if(!WK.includes(w))return 'нет такого оружия';if(total(me,w)<=0)return `на складе нет: ${WPN[w].n}`;if(!lands(me).some(s=>s.st[w]>0&&ang(s,t)<=wRange(me,w)))return 'отсюда не достаёт: смотри кольцо дальности';}
+ return 'не получилось: попробуй ещё раз';}
+function whyCap(t,s){if(!t)return 'нет цели';if(!t.alive)return 'земля уже сгорела';if(t.owner===me)return 'это уже твоя земля';if(t.owner>=0)return 'чужая земля: её можно только бомбить';if(t.cap)return t.cap.by===me?'ты уже захватываешь эту землю':'землю уже забирают';
+ if(s&&s.job)return `отсюда не выйдет: ${jobTxt(s)}`;
+ const src=capSources(me,t);if(!src.length){const border=[...t.adj,...t.sea].filter(x=>x.alive&&x.owner===me);if(!border.length)return 'нужна своя земля у границы';if(border.every(x=>x.job))return 'твоя земля у границы занята делом';}
+ return 'не получилось: попробуй ещё раз';}
+function whyOrder(c,w,t,s){if(!running)return 'сейчас нельзя';if(paused)return 'пауза';if(over||matchEnded)return 'матч окончен';if(isGuest()&&!net.conn.open)return 'нет связи с хостом';
+ if(c==='buy')return whyBuild(w,t);if(c==='up')return whyUp(w,t);if(c==='fire')return whyFire(w,t);if(c==='cap')return whyCap(t,s);
+ if(c==='nuke')return whyFire('n',t);if(c==='condemn')return 'осудить уже нельзя: отсчёт кончился или ты уже осудил';
+ if(c==='scrap')return !t||t.owner!==me?'не твоя земля':t.st[w]>0?'не получилось: попробуй ещё раз':`на складе нет: ${WPN[w].n}`;
+ if(c==='cancel')return t?.job?'не получилось: попробуй ещё раз':'на земле нет дела';
+ if(c==='auto')return w&&PW[me].up.rkt<wLvl(me,w)?`нужна ракетная программа ${wLvl(me,w)}`:'не получилось: попробуй ещё раз';
+ return isGuest()?'хост не ответил: попробуй ещё раз':'не получилось: попробуй ещё раз';}
+$('cnext').onclick=()=>{tut.step++;tut.doneAt=0;showCoach();};$('cskip').onclick=()=>{tut.on=false;tut.base=null;showCoach();};
 
 /* --- сигналы союзникам: Alt+клик, клик колёсиком, клавиша G или кнопка слева внизу --- */
 const PING={atk:{n:'бей сюда',col:'#ef4444',ic:'t'},def:{n:'прикрой щитом',col:'#38bdf8',ic:'pvo'},cap:{n:'забирай',col:'#4ade80',ic:'cap'},see:{n:'внимание',col:'#fde047',ic:'ping'}};
@@ -1219,6 +1550,15 @@ function stepPings(dt){for(let i=pings.length-1;i>=0;i--){const g=pings[i];g.t-=
 /* тревога: клик по плашке или клавиша T переносит камеру к земле, по которой летит самое опасное */
 function jumpAlarm(i){const t=Number.isInteger(i)&&T[i]?T[i]:warnList[0]?.[0];if(!t){S.no();return;}S.click();closeRadial();kbMode=false;flyTo(t.pos,Math.min(camera.position.length(),2.4));}
 $('warn').addEventListener('pointerdown',e=>{const b=e.target.closest('button');if(b)jumpAlarm(+b.dataset.i);});
+/* плашка ядерного пуска: «осудить» шлёт голос, клик по самой плашке показывает цель */
+$('nukes').addEventListener('pointerdown',async e=>{
+ const b=e.target.closest('button'),row=e.target.closest('[data-i]');
+ if(b&&!b.disabled){
+  const by={i:+b.dataset.by};
+  if(await order('condemn','',by)){S.buy();hudT=0;}else{S.no();showWhy(whyOrder('condemn','',by,null),$('nukes'));}
+ }
+ else if(row)jumpAlarm(+row.dataset.i);
+});
 function focusPower(i){const L=lands(i),t=L.find(x=>x===POWERS[i].home)||L.sort((a,b)=>b.hp-a.hp)[0];if(!t){S.no();return;}S.click();closeRadial();flyTo(t.pos,THREE.MathUtils.clamp(camera.position.length(),2.2,3.2));}
 
 /* --- клавиатура: WASD и стрелки крутят глобус, Q/E зум. В этом режиме землю выбирает прицел в центре экрана --- */
@@ -1237,19 +1577,21 @@ function radFocus(d){const B=[...$('radial').querySelectorAll('.rb:not(.off),.rs
 function cycleLand(d){const L=lands(me).sort((a,b)=>(!!a.job-!!b.job)||a.i-b.i);if(!L.length)return;const i=L.indexOf(hov),t=L[i<0?0:(i+d+L.length)%L.length];
  closeRadial();kbMode=true;flyTo(t.pos,camera.position.length());setHov(t);S.click();}
 addEventListener('keydown',async e=>{if(!running||e.ctrlKey||e.metaKey||['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName))return;const k=e.code,n='123456'.indexOf(e.key);
- if(k==='Escape'){closeRadial();setPing(false);return;}
+ if(k==='Escape'){closeRadial();setPing(false);setNuke(false);return;}
+ if(k==='KeyN'){toggleNuke();return;}
  if(k==='Space'){e.preventDefault();$('bpause').onclick();return;}
  if(radT&&k.startsWith('Arrow')){e.preventDefault();radFocus(k==='ArrowRight'||k==='ArrowDown'?1:-1);return;}
  if(MOVE[k]||ZIN.includes(k)||ZOUT.includes(k)){e.preventDefault();keys.add(k);if(MOVE[k]){kbMode=true;fly=null;controls.autoRotate=false;}return;}
  if(k==='Tab'){e.preventDefault();if(!over)cycleLand(e.shiftKey?-1:1);return;}
  if(k==='KeyV'){togglePvo();return;}
  if(k==='KeyT'){jumpAlarm();return;}
- if(k==='KeyG'){const t=landUnder();if(t||globeAt(kbMode?innerWidth/2:mx,kbMode?innerHeight/2:my,hitP))sendPing(t,hitP);else S.no();return;}
+ if(k==='KeyG'){const t=landUnder();if(t||globeAt(kbMode?innerWidth/2:mx,kbMode?innerHeight/2:my,hitP))sendPing(t,hitP);else{S.no();showWhy('наведи на землю или на глобус',$('bping'));}return;}
  if(k==='Enter'||k==='KeyF'){if(k==='Enter'&&e.target.tagName==='BUTTON')return;e.preventDefault();const t=landUnder();
-  if(over||!t||!t.alive||!PW[me].alive){S.no();return;}S.click();openRadial(t,hitP);if(radT)radFocus(1);return;}
+  if(nukeMode){aimNuke(t);return;}
+  if(over||!t||!t.alive||!PW[me].alive){S.no();showWhy(!t?'наведи на землю':'сейчас нельзя',$('kbx'));return;}S.click();openRadial(t,hitP);if(radT)radFocus(1);return;}
  const t=kbMode?landUnder():hov;
- if(n>=0&&n<5&&t&&hostile(me,t)){if(await order('fire',WK[n],t)){lastW=WK[n];S.click();tutEvent('fire');}else S.no();}
- else if(n>=0&&t&&t.owner===me){if(await order('buy',BK[n],null,t)){S.buy();tutEvent(n===5?'pvo':'buy');}else S.no();}});
+ if(n>=0&&n<5&&t&&hostile(me,t)){if(await order('fire',WK[n],t)){lastW=WK[n];S.click();}else{S.no();showWhy(whyOrder('fire',WK[n],t,null),$('dock'));}}
+ else if(n>=0&&t&&t.owner===me){if(await order('buy',BK[n],null,t)){S.buy();}else{S.no();showWhy(whyOrder('buy',BK[n],t,null),$('dock'));}}});
 addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>keys.clear());
 const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
 /* точка глобуса под курсором: считаем по формуле шара, а не перебором треугольников — точнее и быстрее */
@@ -1283,10 +1625,11 @@ cv.addEventListener('pointerup',async e=>{tpEnd(e);if(!down)return;const moved=M
  const t=landAt(e.clientX,e.clientY);
  if(!running){if(e.button===0&&!over&&t&&t.home>=0)$('pick').children[t.home].click();return;}
  if(e.altKey||pingMode||e.button===1){if(t||globeAt(e.clientX,e.clientY,hitP))sendPing(t,hitP);return;}
+ if(nukeMode){if(e.button===0)aimNuke(t);else setNuke(false);return;}
  /* правая кнопка по врагу: ещё один пуск тем же, чем стреляли в прошлый раз, без меню */
  if(e.button===2){if(over||!t||!hostile(me,t)||!PW[me].alive)return;
-  if(!lastW){log('правая кнопка повторяет прошлый пуск: сначала выбери оружие в меню','#fde047');S.no();return;}
-  if(await order('fire',lastW,t)){S.click();tutEvent('fire');}else S.no();return;}
+  if(!lastW){showWhy('правая кнопка повторяет прошлый пуск: сначала выбери оружие в меню',$('dock'));S.no();return;}
+  if(await order('fire',lastW,t))S.click();else{S.no();showWhy(whyOrder('fire',lastW,t,null),$('dock'));}return;}
  if(over||!t||!t.alive||!PW[me].alive)return;S.click();openRadial(t,hitP);});
 cv.addEventListener('pointermove',e=>{if(tp.has(e.pointerId)){tp.set(e.pointerId,[e.clientX,e.clientY]);
   if(tp.size===2&&pinch>0){const d=Math.max(tpDist(),1);zoomT=THREE.MathUtils.clamp(zoomT*pinch/d,1.3,5.5);pinch=d;}if(tp.size>1)return;}
@@ -1295,9 +1638,10 @@ cv.addEventListener('pointermove',e=>{if(tp.has(e.pointerId)){tp.set(e.pointerId
 const pv3=new THREE.Vector3(),cdir=new THREE.Vector3();
 function drawLabels(){camera.updateMatrixWorld();cdir.copy(camera.position).normalize();const z=camera.position.length(),lim=1/z+.1,sc=THREE.MathUtils.clamp(3/z,.72,1.5).toFixed(2);
  const LB=$('labels');LB.classList.toggle('far',z>4.3);LB.classList.toggle('near',z<2.3);
- for(const t of T){const L=t.lab,own=t.owner>=0;let show=t.alive&&t.pos.dot(cdir)>lim&&(own||t===hov||t.cap||t.site);
-  /* телефон: подписываем только важное — свои земли, наведение, захваты, объекты и тревоги */
-  if(show&&LOW&&(!running?t.home<0:!(team[t.owner]===team[me]||t===hov||t===radT||t.cap||t.site||t.th)))show=false;
+ /* телефон: подписываем только важное — свои земли, наведение, захваты, объекты и тревоги */
+ const shown=t=>{const own=t.owner>=0;let s=t.alive&&t.pos.dot(cdir)>lim&&(own||t===hov||t.cap||t.site);
+  if(s&&LOW&&(!running?t.home<0:!(team[t.owner]===team[me]||t===hov||t===radT||t.cap||t.site||t.th)))s=false;return s;};
+ for(const t of T){const L=t.lab,own=t.owner>=0;let show=shown(t);
   if(!show){if(L.style.display!=='none')L.style.display='none';continue;}
   const mine=running&&own&&team[t.owner]===team[me];
   if(t.dirty){t.dirty=false;L.className='lab'+(t.home>=0&&t.owner===t.home?'':' zone');L.style.color=own?pcol(t.owner):'#cbd5e1';L.firstChild.textContent=t.name;
@@ -1309,7 +1653,9 @@ function drawLabels(){camera.updateMatrixWorld();cdir.copy(camera.position).norm
    /* по земле летит волна: сразу видно, выдержит ли щит */
    {const th=L.children[5],v=t.th;th.style.display=v?'':'none';if(v){th.className='th'+(v.hits?'':' s');th.textContent=(v.kill?'СГОРИТ':v.hits?'ПРОБЬЁТ −'+Math.round(v.dmg):'ЩИТ ДЕРЖИТ')+' · летит '+v.n;}}
    const st=L.children[4];st.style.display=t.site?'':'none';if(t.site){const o=SITE[t.site];st.innerHTML=`${IC[o.ic]}<span>${o.n}</span><small>${o.desc}</small>`;}}
-  const jb=L.children[3],j=mine&&t.job?t.job:null,cp=!j&&running&&t.cap&&team[t.cap.by]===team[me]?t.cap:null,jk=j?j.k+(j.w||''):cp?'cap':'';
+  /* захват: счётчик показываем на самой захватываемой земле, а на своей не дублируем, если цель видна */
+ const job=t.job,capDup=job&&job.k==='c'&&T[job.x]&&shown(T[job.x]);
+ const jb=L.children[3],j=mine&&job&&!capDup?job:null,cp=!j&&running&&t.cap&&team[t.cap.by]===team[me]?t.cap:null,jk=j?j.k+(j.w||''):cp?'cap':'';
   if(L._jk!==jk){L._jk=jk;L._jp=L._js=null;jb.style.display=jk?'':'none';
    if(jk){const ji=jb.firstChild;ji.innerHTML=j&&j.k==='b'?IC[j.w]:j&&j.k==='r'?IC[j.w==='pvo'?'rad':j.w]:IC.cap;ji.style.color=j&&j.k==='b'?WCOL[j.w]:'';}}
   if(jk){const a=j||cp,rate=j&&j.k==='r'?1+CFG.coop*(resLands(t.owner,j.w).length-1):1,pc=Math.min(100,a.t/a.dur*100).toFixed(0),s=Math.max(0,Math.ceil((a.dur-a.t)/rate));
@@ -1323,8 +1669,8 @@ const hp0=p=>Math.round(CFG.homeHp*hpMul(p));
 const powerRows=POWERS.map(p=>{const row=document.createElement('div');row.className='pr';row.style.color=p.color;
  row.innerHTML=`<i></i><span>${p.a3}</span><div class="bar"><b></b></div>`;row.onclick=()=>focusPower(POWERS.indexOf(p));$('plist').appendChild(row);return row;});
 const ESC=['ПРОВОКАЦИИ','ОБМЕН УДАРАМИ','БОЛЬШАЯ ВОЙНА','ТОТАЛЬНАЯ ВОЙНА','СУДНЫЙ ДЕНЬ'];   // уровни эскалации
-let hudT=0,warned=false,siteKey='?',warnList=[],escSeen=-1,escUp=0;
-function drawHud(dt){hudT-=dt;if(hudT>0)return;hudT=.3;if(!over)refreshDock();
+let hudT=0,warned=false,siteKey='?',warnList=[],escSeen=-1,escUp=0,nukeSeen=0;
+function drawHud(dt){hudT-=dt;if(hudT>0)return;hudT=.3;if(!over)refreshDock();if(tut.on)updateCoach();
  const hp=POWERS.map(()=>0),dm=dominant();for(const t of T)if(t.alive&&t.owner>=0)hp[t.owner]+=t.hp;
  powerRows.map((_,i)=>i).sort((a,b)=>(b===me)-(a===me)||(b===him)-(a===him)||hp[b]-hp[a]).forEach((i,rank)=>{
   const row=powerRows[i],p=POWERS[i],human=humans.has(i);row.style.order=rank;
@@ -1337,9 +1683,22 @@ function drawHud(dt){hudT-=dt;if(hudT>0)return;hudT=.3;if(!over)refreshDock();
  /* эскалация: уровень войны, темп строек и цена размера державы */
  {const E=$('esc'),war=left<=0,pr=(tempo()-1)/CFG.escStep,lv=Math.min(Math.floor(pr+1e-9),ESC.length-1),st=strain(me);E.style.display=war?'flex':'none';
   if(war){E.style.color=`hsl(${48-lv*12} 95% 62%)`;
-   E.innerHTML=`<span>${ESC[lv]}</span><span class="ep">${ESC.map((_,i)=>`<i><b style="width:${Math.round(Math.max(0,Math.min(1,pr-i))*100)}%"></b></i>`).join('')}</span><span>темп +${Math.round((tempo()-1)*100)}%</span>${st>0?`<span class="sup">снабжение −${Math.round(st/(1+st)*100)}%</span>`:''}`;
+   E.innerHTML=`<span>${ESC[lv]}</span><span class="ep">${ESC.map((_,i)=>`<i><b style="width:${Math.round(Math.max(0,Math.min(1,pr-i))*100)}%"></b></i>`).join('')}</span><span>темп +${Math.round((tempo()-1)*100)}%</span>${st>0?`<span class="sup">снабжение −${Math.round(st/(1+st)*100)}%</span>`:''}${sanctioned(me)?`<span class="sup">санкции ${Math.ceil(PW[me].sanc-time)}с</span>`:''}${coalFoe(me)>=0?`<span class="sup">коалиция против ${POWERS[coalFoe(me)].a3} ${Math.ceil(PW[me].coalT-time)}с</span>`:''}`;
    if(lv!==escSeen){escSeen=lv;escUp=time+3;log(lv?`эскалация: ${ESC[lv].toLowerCase()}. Стройки быстрее, залпы ботов больше`:`перемирие кончилось: ${ESC[0].toLowerCase()}`,'#fde047');}
    E.classList.toggle('up',time<escUp);}}
+ /* ядерные пуски на отсчёте: кто, куда, сколько секунд осталось, сколько держав осудило и кнопка «осудить» */
+ {const N=$('nukes');N.style.display=nukes.length?'flex':'none';
+  N.innerHTML=nukes.map(n=>{
+   const t=T[n.ti],need=nukeNeed(n.by),voted=n.votes.includes(me),can=PW[me].alive&&team[me]!==team[n.by];
+   const btn=!can?'':voted?'<button disabled>ты осудил</button>'
+    :`<button data-by="${n.by}" data-t="осудить: если наберётся ${need}, ${POWERS[n.by].name} получит санкции, а ты на ${CFG.nuke.coal} с войдёшь в коалицию. Бьёшь по ней в ${CFG.nuke.coalDmg} раза сильнее, но по другим стрелять не сможешь">осудить</button>`;
+   const mine=n.by===me,ally=!mine&&team[n.by]===team[me],left=need-n.votes.length;
+   const note=mine?(left>0?`ещё ${left} осудят, и ты на ${CFG.nuke.sanc} с без исследований и ракет`:`тебя осудили: после пуска ${CFG.nuke.sanc} с без исследований и ракет`)
+    :ally?'пуск союзника: осудить его ты не можешь'
+    :voted?`ты осудил. Наберётся ${need}: ${CFG.nuke.coal} с бьёшь только по ней, зато в ${CFG.nuke.coalDmg} раза сильнее`
+    :!can?'':`удар прилетит в любом случае. Осудишь, и наберётся ${need}: она ${CFG.nuke.sanc} с без исследований и ракет, а ты ${CFG.nuke.coal} с бьёшь только по ней, в ${CFG.nuke.coalDmg} раза сильнее. Промолчишь: ничего не теряешь`;
+   return`<div data-i="${n.ti}" class="${t.owner===me?'me':''}"><span><b style="color:${pcol(n.by)}">${POWERS[n.by].name}</b> → ${t.name}${t.owner===me?' (ТВОЯ)':''}: ядерный удар через <b>${Math.max(0,Math.ceil(n.t))} с</b> · осудили ${n.votes.length} из ${need}</span>${btn}${note?`<small>${note}</small>`:''}</div>`;}).join('');
+  if(nukes.length>nukeSeen)S.alarm();nukeSeen=nukes.length;}
  /* тревога: по каждой моей земле под ударом — сколько летит и выдержит ли щит. Самое опасное первым */
  const TH=new Map();for(const q of projs)if(!q.dead&&q.T.alive&&q.T.owner===me&&team[q.owner]!==team[me]&&!TH.has(q.T))TH.set(q.T,threat(q.T));
  for(const t of T){const v=TH.get(t)||null,k=v?[v.n,v.hits,v.kill,Math.round(v.dmg)].join():'';if((t.thk||'')!==k){t.thk=k;t.th=v;t.dirty=true;}}
@@ -1356,7 +1715,7 @@ function statsHtml(){const K=['shots','icp','cap','burn'],best={};for(const k of
   return`<tr class="${i===me?'me':''}${P.alive?'':' dead'}"><td style="color:${POWERS[i].color}">${POWERS[i].name}${i===me?' · ты':humans.has(i)?' · игрок':''}</td>${K.map(k=>`<td>${c(k)}</td>`).join('')}<td>${lands(i).length}</td></tr>`;}).join('');}
 function showEnd(){watching=false;$('estats').innerHTML=statsHtml();controls.autoRotate=true;$('hud').style.display='none';$('watch').hidden=matchEnded;$('again').hidden=!matchEnded;$('end').style.display='flex';}
 function endMatch(){matchEnded=true;running=false;if(watching||$('end').style.display==='flex')showEnd();}
-function finish(win){over=true;closeRadial();$('coach').style.display='none';$('hud').classList.toggle('watch',true);const mm=Math.floor(time/60);endTimer=setTimeout(()=>{endTimer=null;
+function finish(win){over=true;closeRadial();tut.on=false;tut.base=null;tut.doneAt=0;$('coach').style.display='none';$('why').style.display='none';$('hud').classList.toggle('watch',true);const mm=Math.floor(time/60);endTimer=setTimeout(()=>{endTimer=null;
   $('etitle').textContent=win?'ПОБЕДА':'ПЕПЕЛ';
   $('etext').textContent=win?(allied?`Вы с союзником пережили всех за ${mm} мин.`:`${POWERS[me].name} осталась одна на планете. На это ушло ${mm} мин.`):`${POWERS[me].name} сгорела на ${mm}-й минуте.`;
   showEnd();},2500);}
@@ -1370,15 +1729,15 @@ $('again').onclick=()=>{if(!matchEnded)return;if(isGuest()){if(net.conn.open)net
 function clearBattleVisuals(){
  for(const q of projs)killProj(q);for(const f of fx)f(Infinity);projs.length=fx.length=0;
  pl.fill(0);pa.fill(0);pg.attributes.aA.needsUpdate=true;pcur=pid=shake=0;camera.position.sub(shakeV);shakeV.set(0,0,0);
- fly=null;down=null;hov=hovW=null;GU.uHov.value=-1;document.body.style.cursor='';controls.autoRotate=true;
+ fly=null;down=null;hov=hovW=null;setNuke(false);$('flash').style.opacity=0;GU.uHov.value=-1;document.body.style.cursor='';controls.autoRotate=true;
  for(const t of T){t.marker.visible=true;t.col.set(pcol(t.owner));if(t.dome)t.dome.visible=false;}
 }
 function resetToLobby(){
- running=paused=over=matchEnded=watching=allied=false;time=hudT=netAcc=0;warned=false;dom=-1;escSeen=-1;warnList=[];humans.clear();team=POWERS.map((_,i)=>i);
+ running=paused=over=matchEnded=watching=allied=false;time=hudT=netAcc=escBoost=0;nukes.length=0;warned=false;dom=-1;escSeen=-1;warnList=[];humans.clear();team=POWERS.map((_,i)=>i);
  clearTimeout(endTimer);endTimer=null;clearOrders();sched.length=netEv.length=0;
  T.forEach(t=>Object.assign(t,landState(t.home)));PW.forEach(p=>Object.assign(p,powerState()));clearBattleVisuals();
- closeRadial();tut.on=false;
- for(const id of ['hud','end','tip','coach','warn'])$(id).style.display='none';
+ closeRadial();tut.on=false;tut.base=null;tut.prog=null;tut.doneAt=0;
+ for(const id of ['hud','end','tip','coach','warn','why'])$(id).style.display='none';
  $('hud').classList.toggle('watch',false);$('feed').replaceChildren();$('start').style.display='flex';
  if(isHost()){net.conn.send({t:'reset'});lobbyUpdate();}
  else if(!isGuest())resetLobby();
@@ -1402,7 +1761,7 @@ function startGame(c){au().resume();me=c.me;him=c.him;diff=c.diff;humans=new Set
  running=true;$('start').style.display='none';$('hud').style.display='block';GU.uHov.value=-1;buildDock();
  document.documentElement.style.setProperty('--c',POWERS[me].color);$('abil').innerHTML=`<span class="bdg" style="background:${POWERS[me].color}">${POWERS[me].badge}</span><span>${POWERS[me].abil}</span>`;$('abil').dataset.t=POWERS[me].adesc;
  flyTo(POWERS[me].home.pos,2.5);refreshDock();
- let seen=false;try{seen=localStorage.getItem('zarevo_tut');}catch(e){}tut.on=!seen;tut.step=0;showCoach();}
+ let seen=false;try{seen=localStorage.getItem('zarevo_tut');}catch(e){}tut.on=!seen;tut.step=0;tutProgressReset();showCoach();}
 function startMatch(){if(isGuest()||running||over)return;const ally=$('ally').checked;
  const players=isHost()?roomPlayers():[me],sites=pickSites();
  if(isHost()){if(players.length<2)return mstat('пока никто не подключился');for(const c of net.guests.keys())if(c.open)c.send({t:'start',hp:me,gp:c.player,diff,ally,players,sites});}
@@ -1456,8 +1815,10 @@ function stepVis(dt){const inc=new Map();
   u.uSite.value=t.site?1:0;
   u.uHi.value=running&&hovW&&WPN[hovW]&&hostile(me,t)&&inReach(me,hovW,t)?1:0;}
  GU.uSel.value=radT&&radT.alive?radT.i+1:-1;
+ /* пока ядерный удар в воздухе, края экрана пульсируют красным */
+ {const air=projs.some(q=>!q.dead&&q.w==='n');if(air!==nukeAir){nukeAir=air;document.body.classList.toggle('nukeair',air);}}
  showRings(ringList());pushOwn();}
-let showPvo=false;
+let showPvo=false,nukeAir=false;
 function togglePvo(){showPvo=!showPvo;$('bpvo')?.classList.toggle('on',showPvo);log(showPvo?'купола щитов: видны всегда':'купола щитов: только по делу','#38bdf8');}
 /* если кадры проседают, понемногу снижаем чёткость картинки, чтобы игра не тормозила */
 let curPR=PR,fpsT=0,fpsN=0,slowN=0;
@@ -1483,11 +1844,12 @@ function tick(raw){GU.uTime.value+=raw;
  shake*=Math.pow(.02,raw);shakeV.set(Math.random()-.5,Math.random()-.5,Math.random()-.5).multiplyScalar(shake);camera.position.add(shakeV);
  const dt=running&&!paused?raw:0;
  if(dt>0){if(isGuest())stepProjs(dt,false);else sim(dt);lastSim=performance.now();drawHud(dt);}
+ tutTick();
  stepVis(raw);drawLabels();stepPings(raw);if(radT)placeRadial();
  if(!paused){for(let i=fx.length-1;i>=0;i--)if(!fx[i](raw))fx.splice(i,1);stepParticles(raw);}
  if(composer)composer.render();else renderer.render(scene,camera);}
 stepVis(1);frame();
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);if(composer)composer.setSize(innerWidth,innerHeight);pmat.uniforms.uPx.value=innerHeight*curPR;});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);if(composer)composer.setSize(innerWidth,innerHeight);pmat.uniforms.uPx.value=innerHeight*curPR;placeCoach();});
 </script>
 </body>
 </html>
