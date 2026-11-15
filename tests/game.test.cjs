@@ -500,7 +500,7 @@ test('threat forecast tells whether the incoming wave beats the shield', () => {
 
 // ---- nuclear strike: countdown, condemnation, sanctions, coalition ----
 // X is the neutral land closest to power 0, handed to power 1 as the target; time is past the truce.
-const nukeSetup = g => g.run("time=100;globalThis.X=T.filter(t=>t.i>=12).sort((a,b)=>ang(T[0],a)-ang(T[0],b))[0];X.owner=1;aiCondemnOdds=()=>0;globalThis.shots=[];spawn=(...a)=>shots.push(a)");
+const nukeSetup = g => g.run("time=300;globalThis.X=T.filter(t=>t.i>=12).sort((a,b)=>ang(T[0],a)-ang(T[0],b))[0];X.owner=1;aiCondemnOdds=()=>0;globalThis.shots=[];spawn=(...a)=>shots.push(a)");
 
 test('every power starts with one nuclear strike; it flies after the countdown even when nobody condemns it', () => {
  const g=game();
@@ -515,14 +515,14 @@ test('every power starts with one nuclear strike; it flies after the countdown e
  g.run('stepWorld(1.1)');
  assert.equal(g.run("shots.length===1&&shots[0][0]===0&&shots[0][1]==='n'&&shots[0][3]===X"),true);
  assert.equal(g.run('nukes.length'),0);
- assert.equal(g.run('sanctioned(0)'),false);
+ assert.equal(g.run('sanctioned(0)'),true);
  assert.ok(Math.abs(g.run('tempo()')-before-g.run('CFG.nuke.esc'))<1e-9); // every strike pushes escalation up
 });
 
 test('enough condemnations bring sanctions on the launcher and lock the condemners into a coalition', () => {
  const g=game();nukeSetup(g);
  g.run("doCmd(0,{c:'nuke',x:X.i})");
- const need=g.run('nukeNeed(0)');assert.equal(need,4); // 34% of 11 other powers at the first escalation level
+ const need=g.run('nukeNeed(0)');assert.equal(need,6); // majority of eligible powers
  assert.equal(g.run("doCmd(0,{c:'condemn',x:0})"),false); // not your own launch
  for(let p=1;p<=need;p++)assert.equal(g.run(`doCmd(${p},{c:'condemn',x:0})`),true);
  assert.equal(g.run("doCmd(1,{c:'condemn',x:0})"),false); // one vote each
@@ -535,9 +535,9 @@ test('enough condemnations bring sanctions on the launcher and lock the condemne
  assert.equal(g.run("strikePlan(0,X,4).list.includes('i')"),false);
  g.run("T[0].job={k:'r',w:'eco',t:5,dur:60};stepWorld(3)");assert.equal(g.run('T[0].job.t'),5); // research is frozen
  g.run('T[0].job=null');
- assert.equal(g.run('coalFoe(1)'),0);assert.equal(g.run('coalFoe(5)'),-1);
+ assert.equal(g.run('coalFoe(1)'),0);assert.equal(g.run('coalFoe(7)'),-1);
  // a coalition member hits the outcast harder and cannot fire at anyone else
- assert.ok(Math.abs(g.run("dmgTo(1,'t',T[0])/dmgTo(5,'t',T[0])")-g.run('CFG.nuke.coalDmg'))<1e-9);
+ assert.ok(Math.abs(g.run("dmgTo(1,'t',T[0])/dmgTo(7,'t',T[0])")-g.run('CFG.nuke.coalDmg'))<1e-9);
  g.run("T[1].st.i=2");
  assert.equal(g.run("fire(1,'i',T[2],true)"),false);assert.equal(g.run("fire(1,'i',T[0],true)"),true);
  assert.equal(g.run('aiFoes(1).join()'),'0');
@@ -546,12 +546,20 @@ test('enough condemnations bring sanctions on the launcher and lock the condemne
  assert.equal(g.run("upgrade(0,'eco',null,true)"),true);assert.equal(g.run("fire(0,'i',X,true)"),true);
 });
 
-test('the higher the escalation, the more condemnations sanctions need; too few votes cost nothing', () => {
+test('coalition needs majority regardless of escalation; sanctions always apply', () => {
  const g=game();nukeSetup(g);
- assert.equal(g.run('nukeNeed(0)'),4);
- g.run('escBoost=1');assert.equal(g.run('nukeNeed(0)'),11); // doomsday: everyone must agree
- g.run("doCmd(0,{c:'nuke',x:X.i});for(let p=1;p<=10;p++)condemn(p,0);stepWorld(CFG.nuke.count+.1)");
- assert.equal(g.run('shots.length'),1);assert.equal(g.run('sanctioned(0)'),false);assert.equal(g.run('coalFoe(1)'),-1);
+ assert.equal(g.run('nukeNeed(0)'),6);
+ g.run('escBoost=1');assert.equal(g.run('nukeNeed(0)'),6);
+ g.run("doCmd(0,{c:'nuke',x:X.i});condemn(1,0);stepWorld(CFG.nuke.count+.1)");
+ assert.equal(g.run('shots.length'),1);assert.equal(g.run('sanctioned(0)'),true);
+ assert.equal(g.run('coalFoe(1)'),-1);assert.equal(g.run('PW[0].sanc-time'),90);
+ g.run('time+=90');assert.equal(g.run('sanctioned(0)'),false);
+});
+test('players and panicking bots cannot launch before 05:00', () => {
+ const g=game();nukeSetup(g);g.run('time=299;T[0].hp=1');
+ assert.equal(g.run("doCmd(0,{c:'nuke',x:X.i})"),false);
+ assert.equal(g.run('aiNuke(0)'),false);assert.equal(g.run('PW[0].nuke'),1);
+ g.run('time=300');assert.equal(g.run("doCmd(0,{c:'nuke',x:X.i})"),true);
 });
 
 test('a strike whose target is gone before launch is returned to the owner', () => {
@@ -561,7 +569,7 @@ test('a strike whose target is gone before launch is returned to the owner', () 
 });
 
 test('bots condemn a strike on themselves, stay silent when it hits their victim, and launch when cornered', () => {
- const g=game();g.run("time=100;globalThis.X=T.filter(t=>t.i>=12)[0];X.owner=1");
+ const g=game();g.run("time=300;globalThis.X=T.filter(t=>t.i>=12)[0];X.owner=1");
  assert.equal(g.run('aiCondemnOdds(1,0,X)'),1);
  g.run('PW[2].foe=1;PW[2].foeT=time+50');assert.equal(g.run('aiCondemnOdds(2,0,X)'),0);
  g.run('PW[3].grudge[0]=9');assert.equal(g.run('aiCondemnOdds(3,0,X)'),1);
@@ -572,13 +580,13 @@ test('bots condemn a strike on themselves, stay silent when it hits their victim
 
 test('the host snapshot carries the countdown, votes, sanctions and coalition to the guest', async () => {
  const host=game(),guest=game();nukeSetup(host);
- guest.run("net.role='guest';me=1;him=0;time=100");
+ guest.run("net.role='guest';me=1;him=0;time=300");
  host.run("doCmd(0,{c:'nuke',x:X.i});netSend(0,true)");
  for(const m of host.run('sent.splice(0)'))guest.run(`guestData(${JSON.stringify(m)})`);
  assert.equal(guest.run('nukes.length===1&&nukes[0].by===0&&PW[0].nuke===0'),true);
  const pending=guest.run("order('condemn','',{i:0})");
  host.run(`hostData(${JSON.stringify(guest.run('sent.at(-1)'))},guest)`);
- host.run('for(let p=2;p<=4;p++)condemn(p,0);stepWorld(CFG.nuke.count+.1);netSend(0,true)');
+ host.run('for(let p=2;p<=6;p++)condemn(p,0);stepWorld(CFG.nuke.count+.1);netSend(0,true)');
  for(const m of host.run('sent'))guest.run(`guestData(${JSON.stringify(m)})`);
  assert.equal(await pending,true);
  assert.equal(guest.run('nukes.length===0&&sanctioned(0)&&coalFoe(1)===0&&escBoost===CFG.nuke.esc'),true);
