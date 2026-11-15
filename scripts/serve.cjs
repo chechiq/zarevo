@@ -22,7 +22,9 @@ const files = new Map([
 ]);
 
 const server = http.createServer((req, res) => {
-  const file = files.get(new URL(req.url, 'http://localhost').pathname);
+  const pathname = new URL(req.url, 'http://localhost').pathname;
+  const sfx = /^\/sfx\/([a-z_]+_[1-4])\.mp3$/.exec(pathname);   // звуки ElevenLabs: только имена из папки sfx
+  const file = sfx ? [path.join('sfx', `${sfx[1]}.mp3`), 'audio/mpeg'] : files.get(pathname);
   if (!file) {
     res.writeHead(404);
     res.end();
@@ -30,11 +32,11 @@ const server = http.createServer((req, res) => {
   }
   fs.readFile(path.join(root, file[0]), (error, data) => {
     if (error) {
-      res.writeHead(500);
+      res.writeHead(sfx && error.code === 'ENOENT' ? 404 : 500);
       res.end('Не удалось прочитать файл игры.');
       return;
     }
-    res.writeHead(200, { 'Content-Type': file[1], 'Cache-Control': 'no-store' });
+    res.writeHead(200, { 'Content-Type': file[1], 'Cache-Control': sfx ? 'max-age=86400' : 'no-store' });
     res.end(data);
   });
 });
