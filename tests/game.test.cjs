@@ -414,3 +414,43 @@ test('land capture awards ownership only on completion', () => {
   assert.equal(g.run('target.owner'), 0);
   assert.equal(g.run('target.cap'), null);
 });
+
+test('special sites give their owner the listed bonuses and are placed on neutral lands', () => {
+ const g=game();
+ const sites=g.run('pickSites()');
+ assert.equal(sites.length,6);
+ assert.equal(new Set(sites.map(s=>s[0])).size,6);assert.equal(new Set(sites.map(s=>s[1])).size,6);
+ assert.equal(g.run(`pickSites().every(s=>T[s[0]].home<0)`),true);
+ // ничья земля с объектом бонуса не даёт никому
+ g.run("T.forEach(t=>{if(t.i>=12)t.owner=-1});setSites([[20,'cos'],[21,'ura'],[22,'rad'],[23,'fab'],[24,'bun'],[25,'hub']])");
+ assert.equal(g.run("has(0,'cos')"),false);
+ const base=g.run("({r:wRange(0,'t'),ti:wTime(0,'h'),d:wDmg(0,'h'),pr:pvoRange(0),dr:dronesPer(0),up:upTime(0,'rkt'),cap:capDuration(0,T[0],T[T[0].adj[0].i])})");
+ g.run('for(let i=20;i<=25;i++)T[i].owner=0;refreshSites()');
+ assert.equal(g.run("wRange(0,'t')"),base.r*1.15);
+ assert.ok(Math.abs(g.run("wTime(0,'h')")-base.ti*.7)<1e-9);
+ assert.equal(g.run("wDmg(0,'h')"),base.d+3);assert.equal(g.run("wDmg(0,'t')"),g.run("wDmg(4,'t')"));
+ assert.equal(g.run('pvoRange(0)'),base.pr*1.25);assert.equal(g.run('dronesPer(0)'),base.dr+2);
+ assert.ok(Math.abs(g.run("upTime(0,'rkt')")-base.up*.7)<1e-9);
+ assert.ok(Math.abs(g.run('capDuration(0,T[0],T[T[0].adj[0].i])')-base.cap*.65)<1e-9);
+ // завод строит вдвое быстрее только на своей земле; сгоревший объект бонуса не даёт
+ assert.equal(g.run("landTime(T[23],'t')"),g.run("landTime(T[0],'t')")/2);
+ g.run('T[20].alive=false;refreshSites()');assert.equal(g.run("has(0,'cos')"),false);
+});
+
+test('capturing a factory or a bunker changes that land; stats count captures and burned lands', () => {
+ const g=game();
+ g.run("T.forEach(t=>{if(t.i>=12){t.owner=-1;t.job=null;}});const A=T[0].adj.filter(t=>t.i>=12);setSites([[A[0].i,'fab']]);");
+ assert.equal(g.run('capture(0,A[0],T[0])'),true);
+ g.run('T[0].job.t=T[0].job.dur;stepWorld(.01)');
+ assert.equal(g.run('A[0].owner'),0);assert.equal(g.run('A[0].slots'),g.run('CFG.zoneSlots+CFG.site.fabSlots'));
+ assert.equal(g.run('PW[0].stat.cap'),1);assert.equal(g.run("has(0,'fab')"),true);
+ g.run('T[1].owner=1;destroyLand(T[1],0)');assert.equal(g.run('PW[0].stat.burn'),1);
+ const html=g.run('statsHtml()');assert.ok(html.includes('<b>1</b>'));assert.equal((html.match(/<tr/g)||[]).length,13);
+});
+
+test('auto-repeat and scrap work as land commands without the arsenal panel', () => {
+ const g=game();
+ assert.equal(g.run("doCmd(0,{c:'auto',w:'t',x:0})"),true);assert.equal(g.run('T[0].auto'),'t');
+ assert.equal(g.run("doCmd(0,{c:'auto',w:'',x:0})"),true);assert.equal(g.run('T[0].auto'),null);
+ g.run('T[0].st.t=2');assert.equal(g.run("doCmd(0,{c:'scrap',w:'t',x:0})"),true);assert.equal(g.run('T[0].st.t'),1);
+});
