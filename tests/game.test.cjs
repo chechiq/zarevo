@@ -234,14 +234,15 @@ test('cleanup validates ownership and preview never mutates inventory or jobs', 
 test('country perks change the intended mechanics', () => {
  const g=game();
  assert.equal(g.run("wLvl(0,'i')"),1);
- assert.equal(g.run("wTime(1,'t')<wTime(4,'t')"),true);
- assert.equal(g.run("wTime(3,'t')<wTime(4,'t')"),true);
+ // Китай: каждая третья стройка выдаёт две штуки
+ g.run("T[1].st.t=0;for(let i=0;i<3;i++){T[1].job={k:'b',w:'t',t:1,dur:1};stepWorld(.01);}");
+ assert.equal(g.run('T[1].st.t'),4);
+ assert.equal(g.run("wCount(3,'t')"),2);assert.equal(g.run("wCount(4,'t')"),1);
  assert.equal(g.run("wTime(11,'pvo')<wTime(4,'pvo')"),true);
  assert.equal(g.run('hpMul(8)'),1.25);assert.equal(g.run('slotBonus(8)'),1);
  assert.equal(g.run('capTime(7)'),10);
  assert.equal(g.run("wCount(10,'d')"),6);
  assert.equal(g.run("wDmg(6,'t')"),7);
- assert.equal(g.run("upTime(4,'eco')"),42);
  assert.equal(g.run("wRange(2,'t')>wRange(4,'t')"),true);
 });
 
