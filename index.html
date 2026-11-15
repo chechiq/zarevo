@@ -12,7 +12,11 @@
 html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent;background:#05070d;color:var(--fg);font-family:Manrope,system-ui,sans-serif}
 canvas{display:block;position:fixed;inset:0}
 .mono{font-family:'JetBrains Mono',monospace}
-.card{background:var(--card);border:1px solid var(--line);backdrop-filter:blur(18px);border-radius:16px}
+.card{background:var(--card);border:1px solid var(--line);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-radius:16px}
+/* телефон: размытие фона под карточками пересчитывается каждый кадр и стоит дороже всей сцены */
+@media (pointer:coarse){.card{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(9,12,20,.92)}}
+body.lowfx .card{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(9,12,20,.92)}
+body.lowfx .lab{will-change:auto}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;pointer-events:auto}
 button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 svg.ic.f{fill:currentColor;stroke:none}
@@ -133,7 +137,6 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;str
 #kbx{position:fixed;left:50%;top:50%;width:26px;height:26px;margin:-13px;border:2px solid rgba(255,255,255,.8);border-radius:50%;pointer-events:none;display:none;z-index:3;box-shadow:0 0 0 1px #000,inset 0 0 0 1px #000}
 #kbx::after{content:"";position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px;border-radius:50%;background:#fff}
 body.pingmode canvas{cursor:crosshair!important}
-#flash{position:fixed;inset:0;background:radial-gradient(circle,#fff,#ff9a3a);opacity:0;pointer-events:none;mix-blend-mode:screen}
 /* экраны */
 .ov{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:5vh 16px 4vh;pointer-events:none;z-index:5;background:radial-gradient(ellipse at center,transparent 38%,rgba(3,5,10,.9))}
 .ov>*{pointer-events:auto}
@@ -214,7 +217,6 @@ body.pingmode canvas{cursor:crosshair!important}
 <div id="labels"></div>
 <div id="pings"></div>
 <div id="kbx"></div>
-<div id="flash"></div>
 <div id="hud">
   <div id="plist" class="card"></div>
   <div id="top"><div id="clock" class="mono">00:00</div><div id="esc" data-t="темп войны: после перемирия все стройки ускоряются, а залпы ботов растут с каждым уровнем. Снабжение: каждая земля сверх первых двух замедляет стройки и захваты державы"></div><div id="warn" data-t="клик или клавиша T: камера к месту удара"></div></div>
@@ -326,6 +328,12 @@ T.forEach(t=>{t.adj=t.adj.map(j=>T[j]);t.sea=(W.units[t.i].sea||[]).map(j=>T[j])
 POWERS.forEach((p,k)=>{const t=T[W.units.findIndex(u=>u.key===p.a3)];p.name=t.name;p.home=t;t.owner=t.home=k;});
 /* телефон: палец вместо мыши, карта вдвое мельче (на большую у телефона не хватает памяти), картинка чуть проще */
 const COARSE=matchMedia('(pointer:coarse)').matches,LITE=COARSE&&Math.min(screen.width,screen.height)<820;
+/* КАЧЕСТВО. LOW включается только на сенсорных устройствах и только на слабых: десктопная картинка не меняется.
+   ?q=low / ?q=high — принудительный режим, чтобы проверить оба варианта на компьютере */
+const QF=new URLSearchParams(location.search).get('q');
+const LOW=QF?QF==='low':COARSE&&(LITE||(navigator.deviceMemory||8)<=4||(navigator.hardwareConcurrency||8)<=4);
+if(LOW)document.body.classList.add('lowfx');
+const FBM_OCT=LOW?2:4,FXQ=LOW?.55:1;   // октавы шума на глобусе и доля частиц в эффектах
 const TW=LITE?2048:4096,TH=TW/2,X=lon=>(lon+180)/360*TW,Y=lat=>(90-lat)/180*TH;
 const mkC=()=>{const c=document.createElement('canvas');c.width=TW;c.height=TH;const x=c.getContext('2d',{willReadFrequently:true});x.fillStyle='#000';x.fillRect(0,0,TW,TH);return[c,x];};
 const [idC,idX]=mkC(),[lnC,lnX]=mkC();
@@ -369,9 +377,9 @@ const sdfTex=(()=>{const out=new Uint8Array(TW*TH).fill(255),R=6;
     const px=x+.5-ax,t=Math.max(0,Math.min(1,(px*dx+py*dy)/l2)),ex=px-t*dx,ey=py-t*dy,v=Math.sqrt(ex*ex+ey*ey)*40;if(v<out[o+x])out[o+x]=v;}}};
  const each=g=>{for(const poly of g)for(const ring of poly){const n=ring.length;for(let i=0;i<n;i+=2){const j=(i+2)%n;edge(X(ring[i]),Y(ring[i+1]),X(ring[j]),Y(ring[j+1]));}}};
  W.countries.forEach(c=>each(c.g));each(W.extra);
- const t=new THREE.DataTexture(out,TW,TH,THREE.RedFormat);t.minFilter=THREE.LinearMipmapLinearFilter;t.magFilter=THREE.LinearFilter;t.generateMipmaps=true;t.wrapS=THREE.RepeatWrapping;t.anisotropy=8;t.needsUpdate=true;return t;})();
+ const t=new THREE.DataTexture(out,TW,TH,THREE.RedFormat);t.minFilter=THREE.LinearMipmapLinearFilter;t.magFilter=THREE.LinearFilter;t.generateMipmaps=true;t.wrapS=THREE.RepeatWrapping;t.anisotropy=LOW?2:8;t.needsUpdate=true;return t;})();
 const idTex=new THREE.CanvasTexture(idC);idTex.minFilter=idTex.magFilter=THREE.NearestFilter;idTex.generateMipmaps=false;
-const lnTex=new THREE.CanvasTexture(lnC);lnTex.anisotropy=8;
+const lnTex=new THREE.CanvasTexture(lnC);lnTex.anisotropy=LOW?2:8;
 const ownData=new Uint8Array(64*4),ownTex=new THREE.DataTexture(ownData,64,1);ownTex.minFilter=ownTex.magFilter=THREE.NearestFilter;
 const pcol=o=>o<0?NEUTRAL:POWERS[o].color;
 const tc=new THREE.Color();
@@ -380,7 +388,7 @@ function pushOwn(){tc.set('#28324a');ownData.set([tc.r*255,tc.g*255,tc.b*255,255
 
 /* ================= СЦЕНА ================= */
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
-const PR=Math.min(devicePixelRatio,LITE?1.5:2);
+const PR=Math.min(devicePixelRatio,LOW?1.25:LITE?1.5:2);
 renderer.setPixelRatio(PR);renderer.setSize(innerWidth,innerHeight);
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
 document.body.prepend(renderer.domElement);
@@ -391,16 +399,18 @@ const controls=new OrbitControls(camera,renderer.domElement);
 controls.enablePan=false;controls.enableZoom=false;controls.enableDamping=true;controls.dampingFactor=.1;
 controls.minDistance=1.1;controls.maxDistance=7;controls.autoRotate=true;controls.autoRotateSpeed=.45;
 let zoomT=3.6;
-const composer=new EffectComposer(renderer);
-composer.setPixelRatio(PR);
-composer.addPass(new RenderPass(scene,camera));
-composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.28,.4,.93));composer.addPass(new OutputPass());
+/* на телефоне рисуем напрямую: bloom — это ~10 полных проходов по кадру через half-float буфер,
+   без него картинка почти та же, а кадр выходит в разы дешевле */
+const composer=LOW?null:new EffectComposer(renderer);
+if(composer){composer.setPixelRatio(PR);
+ composer.addPass(new RenderPass(scene,camera));
+ composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.28,.4,.93));composer.addPass(new OutputPass());}
 const NOISE=`
 float hash(vec3 p){p=fract(p*.3183099+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}
 float vn(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);
  return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),
             mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z);}
-float fbm(vec3 p){float a=.5,s=0.;for(int i=0;i<4;i++){s+=a*vn(p);p*=2.02;a*=.5;}return s;}`;
+float fbm(vec3 p){float a=.5,s=0.;for(int i=0;i<${FBM_OCT};i++){s+=a*vn(p);p*=2.02;a*=.5;}return s;}`;
 function cloud(n,r0,r1,size,bright){const g=new THREE.BufferGeometry(),p=new Float32Array(n*3),c=new Float32Array(n*3);
  for(let i=0;i<n;i++){const v=new THREE.Vector3().randomDirection().multiplyScalar(r0+Math.random()*(r1-r0));p.set([v.x,v.y,v.z],i*3);
   const k=bright*(.3+Math.random()),t=Math.random();c.set([k*(.5+.4*t),k*(.68+.2*t),k],i*3);}
@@ -409,10 +419,11 @@ function cloud(n,r0,r1,size,bright){const g=new THREE.BufferGeometry(),p=new Flo
 cloud(4500,60,110,.2,1.2);   // только далёкие звёзды: ближней взвеси вокруг глобуса нет
 const blank=new THREE.DataTexture(new Uint8Array([0,0,0,255]),1,1);blank.needsUpdate=true;
 const GU={tId:{value:idTex},tLine:{value:lnTex},tOwn:{value:ownTex},tLights:{value:blank},tSdf:{value:sdfTex},uTime:{value:0},uHov:{value:-1},uSel:{value:-1},uSun:{value:new THREE.Vector3(1,.3,0).normalize()},uTex:{value:new THREE.Vector2(TW,TH)}};
-const globe=new THREE.Mesh(new THREE.SphereGeometry(1,160,120),new THREE.ShaderMaterial({uniforms:GU,
+const globe=new THREE.Mesh(new THREE.SphereGeometry(1,LOW?96:160,LOW?64:120),new THREE.ShaderMaterial({uniforms:GU,
  vertexShader:`varying vec2 vUv;varying vec3 vP,vWN,vV;void main(){vUv=uv;vP=position;vec4 w=modelMatrix*vec4(position,1.);
   vWN=normalize(mat3(modelMatrix)*normal);vV=cameraPosition-w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}`,
- fragmentShader:`uniform sampler2D tId,tLine,tOwn,tLights,tSdf;uniform float uTime,uHov,uSel;uniform vec2 uTex;uniform vec3 uSun;
+ fragmentShader:`#define NIGHT_DOTS ${LOW?0:1}
+ uniform sampler2D tId,tLine,tOwn,tLights,tSdf;uniform float uTime,uHov,uSel;uniform vec2 uTex;uniform vec3 uSun;
  varying vec2 vUv;varying vec3 vP,vWN,vV;`+NOISE+`
  float gl(float x){float l=abs(fract(x-.5)-.5)/fwidth(x);return 1.-min(l,1.);}
  float h21(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
@@ -454,40 +465,56 @@ const globe=new THREE.Mesh(new THREE.SphereGeometry(1,160,120),new THREE.ShaderM
   /* ночные огни: вдали мягкое свечение, вблизи оно распадается на чёткие точки домов */
   float nf=(1.-day)*land*(1.-burnt);
   if(nf>.003&&L>.004){float soft=pow(L,1.4)*1.15,dots=0.,wm=0.,dens=pow(L,.95)*.55;vec2 q=vUv*vec2(2.,1.);
+#if NIGHT_DOTS
    for(int k=0;k<2;k++){float sc=k==0?700.:2100.,cpx=uTex.y/sc/tpp,w=smoothstep(3.,7.,cpx);
     if(w>0.){vec2 g=q*sc,id=floor(g)+float(k)*31.;float h=h21(id),hb=h21(id+7.3);
      vec2 c=fract(g)-.5-(vec2(hb,h21(id+19.1))-.5)*.55;float r=.13+.1*hb,e=1.2/cpx;
      dots+=w*step(h,dens)*(1.-smoothstep(r-e,r+e,length(c)))*(.55+.45*hb);wm=max(wm,w);}}
+#endif
    col+=(vec3(1.,.8,.5)*soft*(1.-.55*wm)+vec3(1.,.74,.42)*dots*(.6+.8*L))*nf;}
   col+=vec3(1.,.42,.14)*smoothstep(.16,0.,abs(sun-.03))*.12*(.35+.65*(1.-facing));
   col+=vec3(1.,.92,.75)*pow(max(dot(reflect(-uSun,n),normalize(vV)),0.),50.)*.16*(1.-land)*day;
   col+=vec3(.18,.5,1.)*pow(1.-facing,3.2)*.6*(.12+.88*smoothstep(-.3,.3,sun));
   gl_FragColor=vec4(col,1.);}`}));
 scene.add(globe);
-scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.1,64,48),new THREE.ShaderMaterial({uniforms:{uSun:GU.uSun},side:THREE.BackSide,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.1,LOW?40:64,LOW?30:48),new THREE.ShaderMaterial({uniforms:{uSun:GU.uSun},side:THREE.BackSide,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
  vertexShader:`varying vec3 vN,vV;void main(){vec4 w=modelMatrix*vec4(position,1.);vN=normalize(mat3(modelMatrix)*normal);vV=normalize(cameraPosition-w.xyz);gl_Position=projectionMatrix*viewMatrix*w;}`,
  fragmentShader:`uniform vec3 uSun;varying vec3 vN,vV;void main(){float a=pow(clamp(dot(-vN,vV),0.,1.),3.6),sd=dot(normalize(vN),uSun),d=smoothstep(-.35,.35,sd);
   gl_FragColor=vec4((vec3(.16,.46,1.)*(.1+.9*d)+vec3(1.,.42,.16)*smoothstep(.3,0.,abs(sd))*.4)*a*1.3,1.);}`})));
-new THREE.TextureLoader().setCrossOrigin('anonymous').load('https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/textures/planets/earth_lights_2048.png',t=>{t.anisotropy=8;GU.tLights.value=t;});
+new THREE.TextureLoader().setCrossOrigin('anonymous').load('https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/textures/planets/earth_lights_2048.png',t=>{t.anisotropy=LOW?2:8;GU.tLights.value=t;});
 
 const glowTex=(()=>{const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');
  const g=x.createRadialGradient(64,64,0,64,64,64);g.addColorStop(0,'#fff');g.addColorStop(.25,'rgba(255,255,255,.55)');g.addColorStop(.6,'rgba(255,255,255,.12)');g.addColorStop(1,'rgba(255,255,255,0)');
  x.fillStyle=g;x.fillRect(0,0,128,128);return new THREE.CanvasTexture(c);})();
 const mkSprite=(col,s,k=1)=>{const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:new THREE.Color(col).multiplyScalar(k),blending:THREE.AdditiveBlending,depthWrite:false,transparent:true}));sp.scale.setScalar(s);return sp;};
 const sunSp=mkSprite('#fff0c4',5,1);scene.add(sunSp);
-const MAXP=12000,pp=new Float32Array(MAXP*3),pv=new Float32Array(MAXP*3),pc=new Float32Array(MAXP*3),pa=new Float32Array(MAXP),ps=new Float32Array(MAXP),pl=new Float32Array(MAXP),pm=new Float32Array(MAXP);
-let pcur=0;
-const pg=new THREE.BufferGeometry();
-pg.setAttribute('position',new THREE.BufferAttribute(pp,3));pg.setAttribute('aCol',new THREE.BufferAttribute(pc,3));
-pg.setAttribute('aA',new THREE.BufferAttribute(pa,1));pg.setAttribute('aS',new THREE.BufferAttribute(ps,1));
-const pmat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,uniforms:{uPx:{value:innerHeight*PR}},
- vertexShader:`attribute vec3 aCol;attribute float aA,aS;uniform float uPx;varying vec4 c;void main(){c=vec4(aCol,aA);vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=aS*uPx/-mv.z;gl_Position=projectionMatrix*mv;}`,
+const MAXP=LOW?4000:12000,pp=new Float32Array(MAXP*3),pv=new Float32Array(MAXP*3),pc=new Float32Array(MAXP*3),pa=new Float32Array(MAXP),ps=new Float32Array(MAXP),pl=new Float32Array(MAXP),pm=new Float32Array(MAXP),pt=LOW?new Float32Array(MAXP).fill(-1e9):null;
+let pcur=0,pDirty=false,pFull=false;
+const pA=[],pg=new THREE.BufferGeometry();
+const pAttr=(name,arr,n)=>{const a=new THREE.BufferAttribute(arr,n);pg.setAttribute(name,a);pA.push([a,n]);return a;};
+pAttr('position',pp,3);pAttr('aCol',pc,3);pAttr('aS',ps,1);pAttr('aA',LOW?pl:pa,1);
+if(LOW){pAttr('aVel',pv,3);pAttr('aT0',pt,1);}
+const pmat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,uniforms:{uPx:{value:innerHeight*PR},uTime:GU.uTime},
+ /* телефон: физику частиц целиком считает вершинный шейдер — процессор в кадре не участвует */
+ vertexShader:LOW?
+ `attribute vec3 aCol,aVel;attribute float aA,aS,aT0;uniform float uPx,uTime;varying vec4 c;
+ void main(){float age=uTime-aT0,live=step(0.,age)*step(age,aA);
+  vec3 p=position+aVel*(1.-exp(-1.6*age))/1.6;vec4 mv=modelViewMatrix*vec4(p,1.);
+  gl_PointSize=aS*uPx/max(-mv.z,.001)*live;gl_Position=projectionMatrix*mv;
+  c=vec4(aCol,clamp(1.-age/max(aA,.001),0.,1.)*live);}`
+ :`attribute vec3 aCol;attribute float aA,aS;uniform float uPx;varying vec4 c;void main(){c=vec4(aCol,aA);vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=aS*uPx/-mv.z;gl_Position=projectionMatrix*mv;}`,
  fragmentShader:`varying vec4 c;void main(){float d=length(gl_PointCoord-.5);float a=smoothstep(.5,0.,d);gl_FragColor=vec4(c.rgb*a*a*c.a,1.);}`});
 const pts=new THREE.Points(pg,pmat);pts.frustumCulled=false;scene.add(pts);
+/* телефон: в буфер уходит только изменившийся кусок, а не все массивы за кадр */
+function pRange(i){if(pFull)return;for(const [a,n] of pA){const R=a.updateRanges,s=i*n,last=R[R.length-1];
+ if(last&&last.start+last.count===s)last.count+=n;else if(R.length<64)R.push({start:s,count:n});else{pFull=true;return;}}}
 function emit(p,v,col,size,life,k=1){const i=pcur;pcur=(pcur+1)%MAXP;
  pp[i*3]=p.x;pp[i*3+1]=p.y;pp[i*3+2]=p.z;pv[i*3]=v.x;pv[i*3+1]=v.y;pv[i*3+2]=v.z;
- pc[i*3]=col.r*k;pc[i*3+1]=col.g*k;pc[i*3+2]=col.b*k;ps[i]=size;pl[i]=pm[i]=life;}
-function stepParticles(dt){for(let i=0;i<MAXP;i++){if(pl[i]<=0){pa[i]=0;continue;}
+ pc[i*3]=col.r*k;pc[i*3+1]=col.g*k;pc[i*3+2]=col.b*k;ps[i]=size;
+ if(LOW){pl[i]=life;pt[i]=GU.uTime.value;pRange(i);pDirty=true;}else pl[i]=pm[i]=life;}
+function stepParticles(dt){
+ if(LOW){if(!pDirty)return;pDirty=false;if(pFull){pFull=false;for(const [a] of pA)a.clearUpdateRanges();}for(const [a] of pA)a.needsUpdate=true;return;}
+ for(let i=0;i<MAXP;i++){if(pl[i]<=0){pa[i]=0;continue;}
   pl[i]-=dt;const j=i*3;pp[j]+=pv[j]*dt;pp[j+1]+=pv[j+1]*dt;pp[j+2]+=pv[j+2]*dt;
   const d=1-1.6*dt;pv[j]*=d;pv[j+1]*=d;pv[j+2]*=d;pa[i]=Math.max(pl[i]/pm[i],0);}
  pg.attributes.position.needsUpdate=pg.attributes.aA.needsUpdate=pg.attributes.aCol.needsUpdate=pg.attributes.aS.needsUpdate=true;}
@@ -662,14 +689,14 @@ T.forEach(t=>{
   vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
   fragmentShader:`uniform vec3 uColor,uIncCol;uniform float uHome,uHi,uInc,uCap,uSite,uTime;varying vec2 vUv;
   void main(){vec2 p=vUv*2.-1.;float r=length(p);float a=atan(p.x,p.y)/6.2831853+.5;
-   float dot_=smoothstep(.11,.05,r)*uHome;float ring=smoothstep(.035,0.,abs(r-.2))*uHome;
+   float dot_=smoothstep(.11,.05,r)*uHome;
    float cap=step(a,uCap)*smoothstep(.05,0.,abs(r-.34));
    float hi=uHi*smoothstep(.05,0.,abs(r-(.44+.05*sin(uTime*6.))));
    /* прицел: кольцо сжимается, пока снаряд летит */
    float rr=.3+.62*clamp(uInc,0.,1.);float inc=step(0.,uInc)*(smoothstep(.045,0.,abs(r-rr))+.6*smoothstep(.03,0.,abs(fract(a*4.+.125)-.5)*r)*step(rr-.14,r)*step(r,rr+.02));
    /* особый объект: золотой ромб, который видно на любой земле */
    float dm=abs(p.x)+abs(p.y),sp=.5+.5*sin(uTime*3.);float site=uSite*(smoothstep(.05,0.,abs(dm-(.6+.06*sp)))+.5*smoothstep(.04,0.,abs(dm-.3))+.06*smoothstep(.6,.2,dm));
-   vec3 c=uColor*(dot_*2.4+ring*1.3)+vec3(1.6)*cap+vec3(1.4)*hi+uIncCol*inc*2.2+vec3(1.,.74,.2)*site*1.5;
+   vec3 c=uColor*(dot_*2.4)+vec3(1.6)*cap+vec3(1.4)*hi+uIncCol*inc*2.2+vec3(1.,.74,.2)*site*1.5;
    gl_FragColor=vec4(c,1.);}`}));
  t.marker.position.copy(t.pos).multiplyScalar(1.014);t.marker.lookAt(t.pos.clone().multiplyScalar(3));t.marker.scale.setScalar(.2);scene.add(t.marker);
  t.lab=document.createElement('div');t.lab.className='lab';t.lab.innerHTML='<div class="n"></div><div class="hb"><b></b></div><div class="sl"></div><div class="jb"><span class="ji"></span><div class="jp"><b></b></div><span class="js mono"></span></div><div class="st"></div><div class="th"></div>';$('labels').appendChild(t.lab);
@@ -695,7 +722,7 @@ const battleAudible=(from,to)=>team[from]===team[me]||team[to]===team[me];
 function nuke(pos,s,audible){pos=pos.clone().normalize().multiplyScalar(1.012);
  fireball(pos,.24*s,'#ffffff',.5);fireball(pos,.36*s,'#ffb030',1.6,.02);fireball(pos.clone().multiplyScalar(1.015),.2*s,'#ff3a10',2.6,.04);
  shock(pos,.7*s,'#ffd9a0',1.6);shock(pos,.36*s,'#ff5a20',2.4);
- burst(pos,Math.round(300*s),.34*s,tmpC.set('#ffb040'),.022,1.8);burst(pos,Math.round(140*s),.14*s,tmpC.set('#ff4018'),.035,2.8);burst(pos,Math.round(60*s),.5*s,tmpC.set('#ffffff'),.012,1.2);
+ burst(pos,Math.round(300*s*FXQ),.34*s,tmpC.set('#ffb040'),.022,1.8);burst(pos,Math.round(140*s*FXQ),.14*s,tmpC.set('#ff4018'),.035,2.8);burst(pos,Math.round(60*s*FXQ),.5*s,tmpC.set('#ffffff'),.012,1.2);
  const near=camera.position.clone().normalize().dot(pos.clone().normalize());
  if(near>.2){shake=Math.max(shake,.03*s*near);}
  if(audible)S.boom(Math.min(s,1)*(near>0?1:.4));}
@@ -712,7 +739,7 @@ function fxNet(name,...a){FXN[name](...a);if(isHost())netEv.push([name,...a]);}
 function logTo(p,msg,col){if(p===me)log(msg,col);else if(isHost())for(const c of net.guests.keys())if(c.player===p&&c.open)c.send({t:'notice',msg,col});}
 
 /* ================= СНАРЯДЫ ================= */
-const SEG=120;
+const SEG=LOW?64:120;
 function arc(a,b,t,h,out){const w=a.angleTo(b);if(w<1e-4)return out.copy(a);const s=Math.sin(w);
  out.copy(a).multiplyScalar(Math.sin((1-t)*w)/s).addScaledVector(b,Math.sin(t*w)/s);return out.normalize().multiplyScalar(1.012+h*Math.sin(Math.PI*t));}
 const seaRoutes=[];
@@ -745,7 +772,7 @@ function missile(w,col){const {L,R}=MS[w],g=new THREE.Group();const G=geoCache[w
   if(w==='i'){const b2=new THREE.Mesh(G.band,cm);b2.position.y=-L*.26;g.add(b2);}}
  return g;}
 const uavGeo=(()=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array([0,0,.016, -.013,0,-.011, 0,0,-.005, 0,0,.016, 0,0,-.005, .013,0,-.011, 0,0,-.005,0,.006,-.012,0,0,.004]),3));return g;})();
-let pid=0;const YA=new THREE.Vector3(0,1,0);
+let pid=0;const YA=new THREE.Vector3(0,1,0),dmat={};
 /* кольца дальности: лента по окружности на сфере */
 const RING_N=128,ringPool=[],ringIdx=[];let ringKey='';
 for(let i=0;i<RING_N;i++){const a=i*2;ringIdx.push(a,a+1,a+2,a+1,a+3,a+2);}
@@ -786,7 +813,7 @@ function mkProj(d){const src=T[d.si],tg=T[d.ti],c=pcol(d.owner),W_=WPN[d.w];
  const q=Object.assign({a:src.pos,b:tg.pos,T:tg,h:W_.h,col:new THREE.Color(c),pos:new THREE.Vector3(),prev:src.pos.clone(),checked:false,ic:null},d);
  const mine=battleAudible(d.owner,tg.owner),B=mine?1:.5;
  if(d.w==='d'){q.side=new THREE.Vector3().crossVectors(src.pos,tg.pos).normalize();
-  q.mesh=new THREE.Mesh(uavGeo,new THREE.MeshBasicMaterial({color:new THREE.Color(c).lerp(new THREE.Color('#fff'),.5).multiplyScalar(2.2*B),side:THREE.DoubleSide}));q.mesh.scale.setScalar(.9);
+  q.mesh=new THREE.Mesh(uavGeo,LOW?(dmat[c+'|'+B]||(dmat[c+'|'+B]=new THREE.MeshBasicMaterial({color:new THREE.Color(c).lerp(new THREE.Color('#fff'),.5).multiplyScalar(2.2*B),side:THREE.DoubleSide}))):new THREE.MeshBasicMaterial({color:new THREE.Color(c).lerp(new THREE.Color('#fff'),.5).multiplyScalar(2.2*B),side:THREE.DoubleSide}));q.mesh.scale.setScalar(.9);
   q.lines=d.k===0?[ribbon(q.a,q.b,q.h,c,0,0,0,1.2*B,.25,mine)]:[];q.glow=mkSprite(c,.02,3*B);if(mine&&d.k===0)S.uav();
  }else{q.mesh=missile(d.w,c);
   const fat={t:1,m:1.4,i:2.2,h:2.4}[d.w];
@@ -798,7 +825,7 @@ function mkProj(d){const src=T[d.si],tg=T[d.ti],c=pcol(d.owner),W_=WPN[d.w];
 function spawn(p,w,src,tg,k=0){const a=ang(src,tg),s=WPN[w].spd;PW[p].stat.shots++;
  return mkProj({id:++pid,w,si:src.i,ti:tg.i,t:0,dur:s[0]+s[1]*a,owner:p,k,ph:Math.random()*6,off:w==='d'?(k-(wCount(p,w)-1)/2)*.018:0});}
 function projPos(q,t,out){arc(q.a,q.b,t,q.h,out);if(q.w==='d'){const s=Math.sin(Math.PI*t);out.addScaledVector(q.side,q.off*s+.003*Math.sin(t*40+q.ph)*s);}return out;}
-function killProj(q){if(q.dead)return;fadeLines(q.lines);scene.remove(q.mesh,q.glow);q.glow.material.dispose();if(q.w==='d')q.mesh.material.dispose();q.dead=true;}
+function killProj(q){if(q.dead)return;fadeLines(q.lines);scene.remove(q.mesh,q.glow);q.glow.material.dispose();if(q.w==='d'&&!LOW)q.mesh.material.dispose();q.dead=true;}
 function destroyLand(t,by){if(!t.alive)return;const o=t.owner;
  if(t.job&&t.job.k==='c'){const x=T[t.job.x];if(x.cap&&x.cap.by===o)x.cap=null;}
  t.alive=false;t.hp=0;t.job=t.cap=t.auto=t.dc=null;t.st={d:0,t:0,m:0,i:0,h:0,pvo:0};t.burns++;t.rev=CFG.fallout;t.dirty=true;t.marker.visible=false;
@@ -1097,12 +1124,15 @@ $('dock').addEventListener('click',async e=>{const b=e.target.closest('button');
 let radT=null,radKey='',radExt=130,radWs=[],radAll=false,lastW=null;   // lastW: чем стреляли в прошлый раз (ПКМ по врагу повторяет)
 const rkey=t=>[t.owner,t.alive,t.job?.k,t.job?.w,used(t),t.slots,t.auto,...Object.values(PW[me].up)].join();
 function closeRadial(){$('radial').style.display='none';radT=null;}
+/* телефон: высота дока меняется редко, а чтение offsetHeight каждый кадр заставляет браузер пересчитывать вёрстку */
+let dockHCacheT=0,dockHCacheV=0;
+function dockH(){const n=performance.now();if(n-dockHCacheT>800){dockHCacheT=n;dockHCacheV=$('dock').offsetHeight||0;}return dockHCacheV;}
 const jobTxt=t=>{const j=t.job;return(j.k==='b'?'строит: '+(j.w==='pvo'?'щит':WPN[j.w].n):j.k==='r'?'исследует: '+UP[j.w].n:'захватывает: '+T[j.x].name)+`, ещё ${Math.ceil(j.dur-j.t)} с`;};
 function placeRadial(){if(!radT)return;
  /* склад или дело земли изменились, пока меню открыто: перерисовать, если мышь не на кнопках */
  if(rkey(radT)!==radKey&&!$('radial').matches(':hover')){const t=radT;if(t.owner===me)openRadial(t);else if(t.owner!==-1&&!hostile(me,t))closeRadial();else radKey=rkey(t);if(!radT)return;}pv3.copy(radP).multiplyScalar(1.014);if(!radT.alive||pv3.dot(camera.position)/camera.position.length()<.2)return closeRadial();
  /* меню висит там, куда ткнули, и не уезжает за край экрана */
- pv3.project(camera);const mx=Math.min(radExt,innerWidth/2),lowY=innerHeight-radExt-($('dock').offsetHeight||0)-24,rx=THREE.MathUtils.clamp((pv3.x+1)/2*innerWidth,mx,innerWidth-mx),ry=THREE.MathUtils.clamp((1-pv3.y)/2*innerHeight,Math.min(radExt,innerHeight/2),Math.max(innerHeight/2,Math.min(innerHeight-200,lowY)));
+ pv3.project(camera);const mx=Math.min(radExt,innerWidth/2),lowY=innerHeight-radExt-(LOW?dockH():$('dock').offsetHeight||0)-24,rx=THREE.MathUtils.clamp((pv3.x+1)/2*innerWidth,mx,innerWidth-mx),ry=THREE.MathUtils.clamp((1-pv3.y)/2*innerHeight,Math.min(radExt,innerHeight/2),Math.max(innerHeight/2,Math.min(innerHeight-200,lowY)));
  $('radial').style.transform=`translate(${rx.toFixed(1)}px,${ry.toFixed(1)}px)`;}
 const radP=new THREE.Vector3();
 function openRadial(t,p,re){const R=$('radial'),P=PW[me];let items=[];if(p)radP.copy(p).normalize();else if(radT!==t)radP.copy(t.pos).normalize();
@@ -1265,7 +1295,9 @@ cv.addEventListener('pointermove',e=>{if(tp.has(e.pointerId)){tp.set(e.pointerId
 const pv3=new THREE.Vector3(),cdir=new THREE.Vector3();
 function drawLabels(){camera.updateMatrixWorld();cdir.copy(camera.position).normalize();const z=camera.position.length(),lim=1/z+.1,sc=THREE.MathUtils.clamp(3/z,.72,1.5).toFixed(2);
  const LB=$('labels');LB.classList.toggle('far',z>4.3);LB.classList.toggle('near',z<2.3);
- for(const t of T){const L=t.lab,own=t.owner>=0,show=t.alive&&t.pos.dot(cdir)>lim&&(own||t===hov||t.cap||t.site);
+ for(const t of T){const L=t.lab,own=t.owner>=0;let show=t.alive&&t.pos.dot(cdir)>lim&&(own||t===hov||t.cap||t.site);
+  /* телефон: подписываем только важное — свои земли, наведение, захваты, объекты и тревоги */
+  if(show&&LOW&&(!running?t.home<0:!(team[t.owner]===team[me]||t===hov||t===radT||t.cap||t.site||t.th)))show=false;
   if(!show){if(L.style.display!=='none')L.style.display='none';continue;}
   const mine=running&&own&&team[t.owner]===team[me];
   if(t.dirty){t.dirty=false;L.className='lab'+(t.home>=0&&t.owner===t.home?'':' zone');L.style.color=own?pcol(t.owner):'#cbd5e1';L.firstChild.textContent=t.name;
@@ -1403,7 +1435,10 @@ function stepVis(dt){const inc=new Map();
  for(const {a,b,line} of seaRoutes){const owns=a.owner===me||b.owner===me,active=(a.job?.k==='c'&&a.job.x===b.i)||(b.job?.k==='c'&&b.job.x===a.i);
   line.visible=!!(running&&!over&&a.alive&&b.alive&&owns&&(active||hov===a||hov===b||radT===a||radT===b));}
  for(const q of projs){if(q.dead)continue;const r=1-Math.min(q.t,1),c=inc.get(q.T);if(!c||r<c[0])inc.set(q.T,[r,q.col]);}
+ /* телефон: значки на обратной стороне глобуса не рисуем — они всё равно закрыты планетой */
+ const zC=camera.position.length(),limM=1/zC-.02;if(LOW)cdir.copy(camera.position).normalize();
  for(const t of T){t.vis+=((t.alive?t.hp/t.maxHp*(t.burns&&t.owner<0?.6:1):0)-t.vis)*Math.min(dt*1.5,1);
+  if(LOW){const mk=t.alive&&t.pos.dot(cdir)>limM;if(t.marker.visible!==mk)t.marker.visible=mk;}
   if(isGuest()){if(t.cap)t.cap.t=Math.min(t.cap.t+dt,t.cap.dur);if(t.job)t.job.t=Math.min(t.job.t+dt,t.job.dur);}
   tc.set(pcol(t.owner));if(t.cap)tc.copy(neutralC).lerp(tmpC.set(pcol(t.cap.by)),.2+.6*t.cap.t/t.cap.dur);
   t.col.lerp(tc,Math.min(dt*2.2,1));
@@ -1426,7 +1461,7 @@ let showPvo=false;
 function togglePvo(){showPvo=!showPvo;$('bpvo')?.classList.toggle('on',showPvo);log(showPvo?'купола щитов: видны всегда':'купола щитов: только по делу','#38bdf8');}
 /* если кадры проседают, понемногу снижаем чёткость картинки, чтобы игра не тормозила */
 let curPR=PR,fpsT=0,fpsN=0,slowN=0;
-function setPR(v){curPR=v;renderer.setPixelRatio(v);composer.setPixelRatio(v);pmat.uniforms.uPx.value=innerHeight*v;}
+function setPR(v){curPR=v;renderer.setPixelRatio(v);if(composer)composer.setPixelRatio(v);pmat.uniforms.uPx.value=innerHeight*v;}
 function adapt(raw){if(document.hidden||GU.uTime.value<5)return;fpsT+=raw;fpsN++;if(fpsT<1.5)return;const fps=fpsN/fpsT;fpsT=fpsN=0;
  if(fps<42&&curPR>1){if(++slowN>=2){slowN=0;setPR(Math.max(1,curPR-.25));}}else slowN=0;}
 let lastSim=performance.now();
@@ -1450,9 +1485,9 @@ function tick(raw){GU.uTime.value+=raw;
  if(dt>0){if(isGuest())stepProjs(dt,false);else sim(dt);lastSim=performance.now();drawHud(dt);}
  stepVis(raw);drawLabels();stepPings(raw);if(radT)placeRadial();
  if(!paused){for(let i=fx.length-1;i>=0;i--)if(!fx[i](raw))fx.splice(i,1);stepParticles(raw);}
- composer.render();}
+ if(composer)composer.render();else renderer.render(scene,camera);}
 stepVis(1);frame();
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight);pmat.uniforms.uPx.value=innerHeight*curPR;});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);if(composer)composer.setSize(innerWidth,innerHeight);pmat.uniforms.uPx.value=innerHeight*curPR;});
 </script>
 </body>
 </html>
