@@ -427,11 +427,12 @@ test('special sites give their owner the listed bonuses and are placed on neutra
  const base=g.run("({r:wRange(0,'t'),ti:wTime(0,'h'),d:wDmg(0,'h'),pr:pvoRange(0),dr:dronesPer(0),up:upTime(0,'rkt'),cap:capDuration(0,T[0],T[T[0].adj[0].i])})");
  g.run('for(let i=20;i<=25;i++)T[i].owner=0;refreshSites()');
  assert.equal(g.run("wRange(0,'t')"),base.r*1.15);
- assert.ok(Math.abs(g.run("wTime(0,'h')")-base.ti*.7)<1e-9);
+ const sup=g.run('1+strain(0)');assert.ok(sup>1); // шесть лишних земель растягивают снабжение
+ assert.ok(Math.abs(g.run("wTime(0,'h')")-base.ti*.7*sup)<1e-9);
  assert.equal(g.run("wDmg(0,'h')"),base.d+3);assert.equal(g.run("wDmg(0,'t')"),g.run("wDmg(4,'t')"));
  assert.equal(g.run('pvoRange(0)'),base.pr*1.25);assert.equal(g.run('dronesPer(0)'),base.dr+2);
  assert.ok(Math.abs(g.run("upTime(0,'rkt')")-base.up*.7)<1e-9);
- assert.ok(Math.abs(g.run('capDuration(0,T[0],T[T[0].adj[0].i])')-base.cap*.65)<1e-9);
+ assert.ok(Math.abs(g.run('capDuration(0,T[0],T[T[0].adj[0].i])')-base.cap*.65*sup)<1e-9);
  // завод строит вдвое быстрее только на своей земле; сгоревший объект бонуса не даёт
  assert.equal(g.run("landTime(T[23],'t')"),g.run("landTime(T[0],'t')")/2);
  g.run('T[20].alive=false;refreshSites()');assert.equal(g.run("has(0,'cos')"),false);
@@ -453,4 +454,46 @@ test('auto-repeat and scrap work as land commands without the arsenal panel', ()
  assert.equal(g.run("doCmd(0,{c:'auto',w:'t',x:0})"),true);assert.equal(g.run('T[0].auto'),'t');
  assert.equal(g.run("doCmd(0,{c:'auto',w:'',x:0})"),true);assert.equal(g.run('T[0].auto'),null);
  g.run('T[0].st.t=2');assert.equal(g.run("doCmd(0,{c:'scrap',w:'t',x:0})"),true);assert.equal(g.run('T[0].st.t'),1);
+});
+
+test('supply slows a big empire and the land leader becomes the dominant power', () => {
+ const g=game();
+ const one=g.run("wTime(0,'t')");assert.equal(g.run('dominant()'),-1);
+ g.run('for(let i=12;i<18;i++)T[i].owner=0');
+ assert.ok(Math.abs(g.run("wTime(0,'t')")-one*g.run('1+CFG.supply.per*(7-CFG.supply.free)'))<1e-9);
+ assert.equal(g.run('dominant()'),0);
+ g.run('for(let i=18;i<24;i++)T[i].owner=1');assert.equal(g.run('dominant()'),-1); // двое равных: сверхдержавы нет
+});
+
+test('bots open a shield with drones before heavy missiles and never waste an ICBM on a full dome', () => {
+ const g=game();
+ g.run("globalThis.X=T.filter(t=>t.i>=12).sort((a,b)=>ang(T[0],a)-ang(T[0],b))[0];X.owner=1;X.hp=X.maxHp=14;X.st.pvo=2;T[0].st.i=1");
+ assert.equal(g.run('strikePlan(0,X,4).list.join()'),'');assert.equal(g.run('strikePlan(0,X,4).blocked'),true);
+ g.run('T[0].st.d=1');
+ assert.equal(g.run('strikePlan(0,X,4).list.join()'),'d,i');assert.equal(g.run('strikePlan(0,X,4).kill'),false);
+ g.run('X.st.pvo=0;X.hp=4;T[0].st.t=1');
+ assert.equal(g.run('strikePlan(0,X,4).list.join()'),'t'); // добивает самым дешёвым
+});
+
+test('a volley at a shielded land sends drones first and the ICBM after them; ammo returns if the target is gone', () => {
+ const g=game();
+ g.run("time=100;globalThis.X=T.filter(t=>t.i>=12).sort((a,b)=>ang(T[0],a)-ang(T[0],b))[0];X.owner=1;X.st.pvo=2;T[0].st.i=1;T[0].st.d=1");
+ assert.equal(g.run("fire(0,'*',X)"),true);assert.equal(g.run('T[0].st.i+T[0].st.d'),0);
+ const d=g.run('sched.map(e=>e.t-time)');assert.equal(d.length,2);assert.equal(d[0],0);
+ const eta=w=>g.run(`(WPN.${w}.spd[0]+WPN.${w}.spd[1]*ang(T[0],X))*checkAt('${w}')`);
+ assert.ok(d[1]+eta('i')>eta('d'));
+ g.run('X.owner=-1;for(const e of sched.splice(0))e.fn()');
+ assert.equal(g.run('T[0].st.i+T[0].st.d'),2);
+});
+
+test('threat forecast tells whether the incoming wave beats the shield', () => {
+ const g=game();
+ g.run("globalThis.Q=w=>({w,T:T[0],owner:1,si:1,t:.1,dur:20});T[0].st.pvo=1;projs.push(Q('t'))");
+ assert.equal(g.run('threat(T[0]).hits'),0);
+ g.run("projs.push(Q('t'))");
+ assert.equal(g.run('threat(T[0]).hits'),1);assert.equal(g.run('threat(T[0]).kill'),false);
+ g.run("projs.length=0;projs.push(Q('i'))"); // на МБР нужно два заряда
+ assert.equal(g.run('threat(T[0]).hits'),1);
+ g.run("T[0].hp=5");assert.equal(g.run('threat(T[0]).kill'),true);
+ assert.equal(g.run('threat(T[1])'),null);
 });

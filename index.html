@@ -25,12 +25,21 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;str
 .pr{cursor:pointer}.pr:hover span{color:#fff}
 .pr span{color:var(--mut)}
 .pr.me span{color:#fff}.pr.hum span{color:#fde047}
+.pr.dom span::after{content:"★";color:#fde047;margin-left:2px}
 .pr .bar{height:8px;border-radius:4px;background:rgba(148,163,184,.18);overflow:hidden}
 .pr .bar b{display:block;height:100%;background:currentColor;transition:width .4s}
 .pr.dead{opacity:.28}.pr.dead span{text-decoration:line-through}
 #top{position:absolute;left:50%;top:14px;transform:translateX(-50%);text-align:center}
 #clock{font-size:12px;letter-spacing:.25em;color:var(--mut)}
-#warn{margin-top:8px;padding:7px 16px;border-radius:999px;border:1px solid var(--bad);color:#fecaca;background:rgba(239,68,68,.16);font-size:12px;font-weight:700;display:none;animation:blink .7s infinite alternate;max-width:44vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#warn{margin-top:8px;display:none;gap:6px;justify-content:center;flex-wrap:wrap;pointer-events:auto;max-width:70vw}
+#warn button{padding:7px 14px;border-radius:999px;border:1px solid var(--bad);color:#fecaca;background:rgba(239,68,68,.16);font-size:12px;font-weight:700;white-space:nowrap;animation:blink .7s infinite alternate}
+#warn button.s{border-color:#38bdf8;color:#bae6fd;background:rgba(56,189,248,.14);animation:none}
+#warn button.k{color:#fff;background:rgba(239,68,68,.5)}
+#warn button:hover{border-color:#fff}
+/* эскалация: уровень войны, темп и нагрузка на снабжение */
+#esc{margin:6px auto 0;display:none;gap:8px;align-items:center;justify-content:center;width:max-content;padding:4px 11px;border-radius:999px;background:var(--card);border:1px solid var(--line);font:700 10px 'JetBrains Mono',monospace;letter-spacing:.08em;pointer-events:auto;cursor:help}
+#esc .ep{display:flex;gap:2px}#esc .ep i{width:14px;height:4px;border-radius:2px;background:rgba(148,163,184,.25);overflow:hidden}#esc .ep i b{display:block;height:100%;background:currentColor}
+#esc .sup{color:#fca5a5}#esc.up{animation:pulse 1s 3}
 @keyframes blink{to{background:rgba(239,68,68,.42)}}
 #feed{position:absolute;right:16px;top:16px;width:250px;display:flex;flex-direction:column;gap:6px;align-items:flex-end}
 #feed div{font-size:12px;font-weight:600;padding:6px 11px;border-radius:10px;background:var(--card);border-left:2px solid var(--c);animation:fin .25s ease-out;transition:opacity .8s}
@@ -85,6 +94,7 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;str
 #radial .rs.au{font-size:14px}
 #radial .rs.au.on{background:#fde047;color:#000;border-color:#fde047}
 @keyframes rin{from{transform:scale(.4);opacity:0}}
+#radial.noan *{animation:none!important}
 #tip{position:fixed;z-index:8;pointer-events:none;display:none;padding:9px 12px;max-width:250px;font-size:12px;line-height:1.4;border-radius:12px}
 #tip b{display:block;font-size:13px;margin-bottom:2px}#tip small{color:var(--mut);display:block;margin-top:4px}
 /* подписи на глобусе */
@@ -106,6 +116,8 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;str
 .lab .st small{display:none;flex-basis:100%;font-weight:600;color:#fef3c7;white-space:normal;text-align:left;font-size:9px;line-height:1.3}
 .lab.show .st{flex-wrap:wrap}.lab.show .st small{display:block}
 #labels.far .lab:not(.show) .st span{display:none}
+.lab .th{margin:3px auto 0;width:max-content;padding:2px 7px;border-radius:7px;font:800 9px Manrope,sans-serif;letter-spacing:.05em;color:#fff;background:rgba(190,30,30,.92);border:1px solid #fecaca;animation:blink .5s infinite alternate}
+.lab .th.s{background:rgba(8,60,95,.92);border-color:#38bdf8;color:#bae6fd;animation:none}
 .lab.idle .sl{border-color:#fde047;animation:idl .8s infinite alternate}
 @keyframes idl{to{border-color:transparent}}
 .lab.zone .n{display:none}.lab.zone.show .n,#labels.near .lab.zone .n{display:block}.lab.zone .hb{width:36px}
@@ -171,7 +183,7 @@ body.pingmode canvas{cursor:crosshair!important}
 <div id="flash"></div>
 <div id="hud">
   <div id="plist" class="card"></div>
-  <div id="top"><div id="clock" class="mono">00:00</div><div id="warn"></div></div>
+  <div id="top"><div id="clock" class="mono">00:00</div><div id="esc" data-t="темп войны: после перемирия все стройки ускоряются, а залпы ботов растут с каждым уровнем. Снабжение: каждая земля сверх первых двух замедляет стройки и захваты державы"></div><div id="warn" data-t="клик или клавиша T: камера к месту удара"></div></div>
   <div id="feed"></div>
   <div id="coach" class="card"><span class="n mono"></span><span class="t"></span><button id="cnext">дальше</button><button id="cskip" aria-label="пропустить обучение">✕</button></div>
   <div id="dock" class="card"></div>
@@ -210,7 +222,11 @@ import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
 /* ================= БАЛАНС (все цифры здесь) ================= */
 const CFG={
  peace:60,                 // сек перемирия в начале
- escalate:1500,            // каждые столько секунд все стройки ускоряются ещё на 100%
+ escalate:900,             // после перемирия каждые столько секунд все стройки ускоряются ещё на 100%
+ escStep:.25,              // на сколько должен вырасти темп, чтобы эскалация поднялась на уровень (с уровнем растут залпы ботов)
+ supply:{free:2,per:.1},   // снабжение: каждая земля сверх free замедляет стройки и захваты державы на per
+ dom:{min:5,share:.18,lead:2,focus:3},   // сверхдержава: от min земель, от доли share всех занятых и с отрывом lead земель от второго места; focus — насколько сильнее боты хотят бить именно её
+ volleyMax:8,              // больше стольких пусков в один залп не уходит
  homeHp:60, zoneHp:20,     // прочность столицы и обычной земли
  homeSlots:6, zoneSlots:3, // ячейки под оружие и щит
  capTime:20, pvoTime:16,   // сек на захват и на заряд щита
@@ -221,7 +237,8 @@ const CFG={
  /* особые объекты: count штук на карте, gap минимальное расстояние между ними (радианы), дальше множители и прибавки */
  site:{count:6,gap:.55,cosRange:1.15,cosRkt:.7,uraTime:.7,uraDmg:3,radRange:1.25,radDrones:2,fabSlots:2,fabTime:.5,bunHp:3,bunArm:.85,hubCap:.65},
  aiThink:[2.5,4.5], aiAttackCd:[50,90], aiGrab:.3,   // aiGrab: как жадно боты хватают ничьи земли (0..1)
- diff:[{n:'легко',tick:1.5,aggro:.6},{n:'норм',tick:1,aggro:1},{n:'жесть',tick:.6,aggro:1.7}]
+ aiRevenge:.12, aiForget:.97, aiStick:1.6, aiFocus:90,   // месть за единицу урона, как быстро обида гаснет (за одно «думанье»), упрямство в выборе жертвы и на сколько секунд
+ diff:[{n:'легко',tick:1.5,aggro:.6,volley:1},{n:'норм',tick:1,aggro:1,volley:2},{n:'жесть',tick:.6,aggro:1.7,volley:3}]   // volley: пусков в залпе бота на старте войны
 };
 /* оружие: time сек стройки, dmg урон, range дальность в радианах (3.2 = вся планета), spd [база, +за радиан] сек полёта, h высота дуги, lvl нужный уровень ракетной программы */
 const WPN={
@@ -269,7 +286,7 @@ const is=(p,a3)=>p>=0&&POWERS[p].a3===a3;
 const ll=(lat,lon,r=1)=>{const ph=(90-lat)*Math.PI/180,th=(lon+180)*Math.PI/180;
  return new THREE.Vector3(-r*Math.sin(ph)*Math.cos(th),r*Math.cos(ph),r*Math.sin(ph)*Math.sin(th));};
 const W=window.WORLD;
-const landState=owner=>({owner,hp:CFG.zoneHp,maxHp:CFG.zoneHp,alive:true,cap:null,job:null,auto:null,slots:CFG.zoneSlots,st:{d:0,t:0,m:0,i:0,h:0,pvo:0},burns:0,rev:0,vis:1,dirty:true,dc:null,sk:null,domeF:0,site:null});
+const landState=owner=>({owner,hp:CFG.zoneHp,maxHp:CFG.zoneHp,alive:true,cap:null,job:null,auto:null,slots:CFG.zoneSlots,st:{d:0,t:0,m:0,i:0,h:0,pvo:0},burns:0,rev:0,vis:1,dirty:true,dc:null,sk:null,domeF:0,site:null,th:null,thk:''});
 const T=W.units.map((u,i)=>({i,name:u.n,pos:ll(u.c[1],u.c[0]),home:-1,...landState(-1),col:new THREE.Color(NEUTRAL),adj:u.adj}));
 T.forEach(t=>{t.adj=t.adj.map(j=>T[j]);t.sea=(W.units[t.i].sea||[]).map(j=>T[j]);});
 POWERS.forEach((p,k)=>{const t=T[W.units.findIndex(u=>u.key===p.a3)];p.name=t.name;p.home=t;t.owner=t.home=k;});
@@ -353,8 +370,7 @@ function cloud(n,r0,r1,size,bright){const g=new THREE.BufferGeometry(),p=new Flo
   const k=bright*(.3+Math.random()),t=Math.random();c.set([k*(.5+.4*t),k*(.68+.2*t),k],i*3);}
  g.setAttribute('position',new THREE.BufferAttribute(p,3));g.setAttribute('color',new THREE.BufferAttribute(c,3));
  const m=new THREE.Points(g,new THREE.PointsMaterial({size,vertexColors:true,sizeAttenuation:true,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));scene.add(m);return m;}
-cloud(4500,60,110,.2,1.2);
-const dust=cloud(1800,1.3,3.2,.006,.8);
+cloud(4500,60,110,.2,1.2);   // только далёкие звёзды: ближней взвеси вокруг глобуса нет
 const blank=new THREE.DataTexture(new Uint8Array([0,0,0,255]),1,1);blank.needsUpdate=true;
 const GU={tId:{value:idTex},tLine:{value:lnTex},tOwn:{value:ownTex},tLights:{value:blank},tSdf:{value:sdfTex},uTime:{value:0},uHov:{value:-1},uSel:{value:-1},uSun:{value:new THREE.Vector3(1,.3,0).normalize()},uTex:{value:new THREE.Vector2(TW,TH)}};
 const globe=new THREE.Mesh(new THREE.SphereGeometry(1,160,120),new THREE.ShaderMaterial({uniforms:GU,
@@ -531,6 +547,7 @@ const $=id=>document.getElementById(id);
 let me=0,him=-1,humans=new Set(),allied=false,diff=1,running=false,paused=false,time=0,hov=null,over=false,matchEnded=false;
 let team=POWERS.map((_,i)=>i);                       // у кого одинаковая команда, те друг друга не бьют
 const powerState=()=>({up:{eco:0,rkt:0,pvo:0,arm:0},nb:0,atk:0,think:3+Math.random()*4,alive:true,regen:0,
+ grudge:POWERS.map(()=>0),foe:-1,foeT:0,tgt:-1,need:null,   // память бота: кто сколько урона нанёс, кого он сейчас давит, какую землю и какого оружия ему не хватает
  site:{cos:0,ura:0,rad:0,fab:0,bun:0,hub:0},        // сколько особых объектов каждого вида у державы
  stat:{shots:0,icp:0,cap:0,burn:0}});               // итоги боя: выпущено, сбито щитами, захвачено, сожжено
 const PW=POWERS.map(powerState);
@@ -548,7 +565,15 @@ function pickSites(){const c=T.filter(t=>t.home<0).sort(()=>Math.random()-.5),n=
 function setSites(list){for(const t of T)t.site=null;if(Array.isArray(list))for(const a of list)if(Array.isArray(a)&&T[a[0]]&&T[a[0]].home<0&&SK.includes(a[1]))T[a[0]].site=a[1];
  for(const t of T)t.dirty=true;refreshSites();}
 /* правила с учётом способностей стран */
-const speed=p=>(1+CFG.ecoPerLvl*PW[p].up.eco)*(1+time/CFG.escalate);
+/* темп войны растёт после перемирия; большая держава платит за размер: снабжение растянуто, стройки и захваты идут медленнее */
+const tempo=()=>1+Math.max(0,time-CFG.peace)/CFG.escalate;
+const escLvl=()=>Math.floor((tempo()-1)/CFG.escStep+1e-9);
+const strain=p=>CFG.supply.per*Math.max(0,lands(p).length-CFG.supply.free);
+const speed=p=>(1+CFG.ecoPerLvl*PW[p].up.eco)*tempo()/(1+strain(p));
+/* сверхдержава: у кого земель заметно больше всех. Боты бьют её в первую очередь */
+let dom=-1;
+function dominant(){const n=POWERS.map(()=>0);let all=0,b=0;for(const t of T)if(t.alive&&t.owner>=0){n[t.owner]++;all++;}
+ n.forEach((v,i)=>{if(v>n[b])b=i;});const second=Math.max(0,...n.filter((_,i)=>i!==b));return n[b]>=CFG.dom.min&&n[b]>=all*CFG.dom.share&&n[b]>=second+CFG.dom.lead?b:-1;}
 const heavy=w=>w==='i'||w==='h';
 const wRange=(p,w)=>WPN[w].range*(is(p,'USA')?1.3:1)*(is(p,'IRN')&&w==='d'?1.6:1)*(has(p,'cos')?CFG.site.cosRange:1);
 const wTime=(p,w)=>(w==='pvo'?CFG.pvoTime*(is(p,'ISR')?.6:1):WPN[w].time*(is(p,'RUS')&&w==='i'?.66:1)*(is(p,'IRN')&&w==='d'?.75:1)*(heavy(w)&&has(p,'ura')?CFG.site.uraTime:1))/speed(p);
@@ -570,7 +595,7 @@ const researching=(p,k)=>lands(p).some(t=>t.job&&t.job.k==='r'&&t.job.w===k);
 const inReach=(p,w,t)=>lands(p).some(s=>ang(s,t)<=wRange(p,w));
 const srcFor=(p,w,t)=>{let best=null,bd=wRange(p,w);for(const s of lands(p)){if(s.st[w]<=0)continue;const d=ang(s,t);if(d<=bd){bd=d;best=s;}}return best;};
 const hostile=(p,t)=>t.alive&&t.owner>=0&&team[t.owner]!==team[p];
-const capDuration=(p,s,t)=>(t.adj.includes(s)?capTime(p):(45+ang(s,t)*20)*(is(p,'GBR')?.5:is(p,'AUS')?.75:is(p,'USA')?.8:1))*(has(p,'hub')?CFG.site.hubCap:1);
+const capDuration=(p,s,t)=>(t.adj.includes(s)?capTime(p):(45+ang(s,t)*20)*(is(p,'GBR')?.5:is(p,'AUS')?.75:is(p,'USA')?.8:1))*(has(p,'hub')?CFG.site.hubCap:1)*(1+strain(p));
 const capSources=(p,t)=>[...new Set([...t.adj,...t.sea])].filter(s=>s.alive&&s.owner===p&&!s.job).sort((a,b)=>capDuration(p,a,t)-capDuration(p,b,t));
 const canCap=(p,t)=>t.alive&&t.owner===-1&&!t.cap&&capSources(p,t).length>0;
 /* чьи щиты прикрывают землю t: свои и союзные земли с зарядом, ближние первыми */
@@ -580,6 +605,18 @@ function shieldUse(q){const t=q.T,D=defenders(t);
   if(!D.length)return null;const df=D[0];df.st.pvo--;df.dirty=true;t.dc={key,n:dronesPer(df.owner)-1,df,at:time};return df;}
  let left=q.w==='i'?2:1;if(D.reduce((a,x)=>a+x.st.pvo,0)<left)return null;
  for(const x of D){const k=Math.min(left,x.st.pvo);x.st.pvo-=k;x.dirty=true;left-=k;if(!left)break;}return D[0];}
+const cover=t=>defenders(t).reduce((a,s)=>a+s.st.pvo,0);   // сколько зарядов щита прикрывает землю
+const dmgTo=(p,w,t)=>wDmg(p,w)*(1-CFG.armPerLvl*PW[t.owner].up.arm)*(has(t.owner,'bun')?CFG.site.bunArm:1);
+const checkAt=w=>w==='d'?.8:.72;                           // на какой доле пути щит решает, сбивать ли
+/* прогноз по волне, летящей в землю t: что собьёт щит, а что долетит. Счёт тот же, что в shieldUse, только заряды не тратятся */
+function threat(t){const Q=projs.filter(q=>!q.dead&&q.T===t&&team[q.owner]!==team[t.owner]&&!(q.ic&&q.ic.ok)&&!q.sv).sort((a,b)=>(checkAt(a.w)-a.t)*a.dur-(checkAt(b.w)-b.t)*b.dur);
+ if(!Q.length)return null;const D=defenders(t),per=D.length?dronesPer(D[0].owner):1,car={};let cov=D.reduce((a,s)=>a+s.st.pvo,0),dmg=0,hits=0;
+ if(t.dc&&t.dc.n>0&&time-t.dc.at<8)car[t.dc.key]=t.dc.n;
+ for(const q of Q){if(!q.checked&&q.t<checkAt(q.w)&&!WPN[q.w].nopvo){const key=q.owner+'|'+q.si;
+   if(q.w==='d'){if(car[key]>0){car[key]--;continue;}if(cov>0){cov--;car[key]=per-1;continue;}}
+   else{const need=q.w==='i'?2:1;if(cov>=need){cov-=need;continue;}}}
+  hits++;dmg+=dmgTo(q.owner,q.w,t);}
+ return{n:Q.length,hits,dmg,kill:dmg>=t.hp,eta:Math.min(...Q.map(q=>(1-q.t)*q.dur))};}
 
 /* --- маркеры и подписи --- */
 const mgeo=new THREE.PlaneGeometry(1,1);
@@ -599,7 +636,7 @@ T.forEach(t=>{
    vec3 c=uColor*(dot_*2.4+ring*1.3)+vec3(1.6)*cap+vec3(1.4)*hi+uIncCol*inc*2.2+vec3(1.,.74,.2)*site*1.5;
    gl_FragColor=vec4(c,1.);}`}));
  t.marker.position.copy(t.pos).multiplyScalar(1.014);t.marker.lookAt(t.pos.clone().multiplyScalar(3));t.marker.scale.setScalar(.2);scene.add(t.marker);
- t.lab=document.createElement('div');t.lab.className='lab';t.lab.innerHTML='<div class="n"></div><div class="hb"><b></b></div><div class="sl"></div><div class="jb"><span class="ji"></span><div class="jp"><b></b></div><span class="js mono"></span></div><div class="st"></div>';$('labels').appendChild(t.lab);
+ t.lab=document.createElement('div');t.lab.className='lab';t.lab.innerHTML='<div class="n"></div><div class="hb"><b></b></div><div class="sl"></div><div class="jb"><span class="ji"></span><div class="jp"><b></b></div><span class="js mono"></span></div><div class="st"></div><div class="th"></div>';$('labels').appendChild(t.lab);
 });
 function log(msg,col){const d=document.createElement('div');d.textContent=msg;d.style.borderLeftColor=col||'var(--c)';$('feed').prepend(d);
  setTimeout(()=>d.style.opacity=0,6000);setTimeout(()=>d.remove(),6900);while($('feed').children.length>5)$('feed').lastChild.remove();}
@@ -734,7 +771,7 @@ function destroyLand(t,by){if(!t.alive)return;const o=t.owner;
  if(o>=0&&!lands(o).length){PW[o].alive=false;fxNet('log',`${POWERS[o].name}: державы больше нет`,pcol(o));}}
 function hit(q){const t=q.T,p=q.owner;
  if(!hostile(p,t)){fxNet('nuke',t.i,.25,p);return;}
- const dmg=wDmg(p,q.w)*(1-CFG.armPerLvl*PW[t.owner].up.arm)*(has(t.owner,'bun')?CFG.site.bunArm:1);t.hp-=dmg;t.dirty=true;
+ const dmg=dmgTo(p,q.w,t);t.hp-=dmg;t.dirty=true;PW[t.owner].grudge[p]+=dmg;   // бот запомнит, кто его бил
  const big=q.w==='d'?.22:.35+dmg*.045;
  if(t.hp<=0){destroyLand(t,p);fxNet('nuke',t.i,big+.3,p);}
  else{fxNet('nuke',t.i,big,p);if(q.w!=='d'||q.k===0)logTo(t.owner,`удар по тебе: ${t.name} (${POWERS[p].name})`,'#ef4444');}}
@@ -752,8 +789,8 @@ function stepProjs(dt,auth){for(const q of projs){if(q.dead)continue;q.t+=dt/q.d
   for(const l of q.lines)l.material.uniforms.uHead.value=t;
   if(!auth)continue;
   const o=q.T.owner;
-  if(!q.checked&&t>=(q.w==='d'?.8:.72)){q.checked=true;
-   if(!WPN[q.w].nopvo&&hostile(q.owner,q.T)){const df=shieldUse(q);if(df){PW[df.owner].stat.icp++;const tHit=q.w==='d'?.93:.9;q.ic={t:tHit,ok:true};
+  if(!q.checked&&t>=checkAt(q.w)){q.checked=true;
+   if(!WPN[q.w].nopvo&&hostile(q.owner,q.T)){const df=shieldUse(q);if(df){PW[df.owner].stat.icp++;PW[o].grudge[q.owner]+=1;const tHit=q.w==='d'?.93:.9;q.ic={t:tHit,ok:true};
     const to=projPos(q,tHit,new THREE.Vector3());fxNet('intc',df.i,to.x,to.y,to.z,Math.max((tHit-q.t)*q.dur,.2));}}}
   if(q.ic&&t>=q.ic.t){if(q.ic.ok){fxNet('air',q.pos.x,q.pos.y,q.pos.z,q.w==='d'?'#ffd27a':'#7fd0ff',q.owner,o);killProj(q);continue;}q.ic=null;}
   if(q.t>=1){hit(q);killProj(q);}}
@@ -782,9 +819,17 @@ function clearStock(p,t,preview=false){if(!PW[p]?.alive||!t||!t.alive||t.owner!=
 function cancelJob(p,t,preview=false){if(!PW[p]?.alive||!t||!t.alive||t.owner!==p||!t.job)return false;
  if(!preview){if(t.job.k==='c'){const x=T[t.job.x];if(x?.cap?.by===p){x.cap=null;x.dirty=true;}}t.job=null;t.dirty=true;}return true;}
 function launch(p,w,s,t){const n=wCount(p,w);for(let k=0;k<n;k++)later(k*.5,()=>{if(t.alive)spawn(p,w,s,t,k);});}
+/* залп с умным порядком. Цель под щитом: первыми приходят дроны, за ними лёгкие ракеты, тяжёлые последними, когда заряды уже выбиты.
+   Гиперзвуку щит не важен, он уходит сразу. Щита нет: тяжёлое летит первым. Q — пары [земля, оружие], уже списанные со склада */
+const RANK={d:0,t:1,h:1,m:2,i:3};
+function salvo(p,t,Q){const cov=cover(t)>0;let prev=0;
+ Q.sort((a,b)=>cov?RANK[a[1]]-RANK[b[1]]:RANK[b[1]]-RANK[a[1]]).forEach(([s,w],i)=>{const sp=WPN[w].spd,eta=(sp[0]+sp[1]*ang(s,t))*checkAt(w);let dl=i*.6;
+  if(cov&&w!=='h'){dl=Math.max(dl,prev+.5-eta);prev=dl+eta+(wCount(p,w)-1)*.5;}
+  /* цель сгорела или сменила хозяина, пока ракета ждала очереди: возвращаем её на склад */
+  later(dl,()=>{if(hostile(p,t))launch(p,w,s,t);else if(s.alive&&s.owner===p){s.st[w]++;s.dirty=true;}});});}
 function fire(p,w,t,preview=false){const P=PW[p];if(!P||!P.alive||time<CFG.peace||!t||!hostile(p,t))return false;
- if(w==='*'){const Q=[];for(const s of lands(p))for(const w2 of WK)if(ang(s,t)<=wRange(p,w2))for(let k=0;k<s.st[w2]&&Q.length<8;k++)Q.push([s,w2]);
-  if(!Q.length)return false;if(preview)return true;Q.forEach(([s,w2],i)=>{s.st[w2]--;s.dirty=true;later(i*.7,()=>launch(p,w2,s,t));});return true;}
+ if(w==='*'){const Q=[];for(const s of lands(p))for(const w2 of WK)if(ang(s,t)<=wRange(p,w2))for(let k=0;k<s.st[w2]&&Q.length<CFG.volleyMax;k++)Q.push([s,w2]);
+  if(!Q.length)return false;if(preview)return true;for(const [s,w2] of Q){s.st[w2]--;s.dirty=true;}salvo(p,t,Q);return true;}
  if(!WK.includes(w))return false;const s=srcFor(p,w,t);if(!s)return false;if(preview)return true;
  s.st[w]--;s.dirty=true;launch(p,w,s,t);return true;}
 function doCmd(p,m,preview=false){if(!Number.isInteger(p)||!PW[p]||!m||typeof m!=='object')return false;
@@ -812,7 +857,8 @@ function stepWorld(dt){refreshSites();
    PW[p].stat.cap++;refreshSites();
    if(x.site)fxNet('log',`${POWERS[p].name} взяла: ${SITE[x.site].n} (${x.name})`,'#fde047');
    else if(humans.has(p))fxNet('log',`${POWERS[p].name} + ${x.name}`,pcol(p));}}
- for(const t of T)if(t.alive&&t.auto&&!t.job&&free(t)>0)build(t.owner,t.auto,t);}
+ for(const t of T)if(t.alive&&t.auto&&!t.job&&free(t)>0)build(t.owner,t.auto,t);
+ {const d=dominant();if(d!==dom){dom=d;if(d>=0)fxNet('log',`${POWERS[d].name}: сверхдержава. Боты бьют её первой`,'#fde047');}}}
 
 /* ================= БОТЫ ================= */
 function aiLand(p,L){const P=PW[p],foes=T.filter(t=>hostile(p,t));
@@ -826,24 +872,52 @@ function aiLand(p,L){const P=PW[p],foes=T.filter(t=>hostile(p,t));
   /* склад забит тем, что уже ни до кого не достаёт: списываем */
   const junk=WK.find(w=>L.st[w]>0&&!reach.includes(w));if(junk)scrap(p,L,junk);return false;}
  const near=foes.some(t=>ang(L,t)<1.7);
- if(L.st.pvo<(L.home===p?2:near?1:0))return build(p,'pvo',L);
+ /* бота недавно били: рядом с врагом он держит на заряд щита больше */
+ const hot=near&&P.grudge.some(g=>g>6);
+ if(L.st.pvo<(L.home===p?2:near?1:0)+(hot?1:0))return build(p,'pvo',L);
  if(!lands(p).some(t=>t.job&&t.job.k==='r')&&Math.random()<.4&&res())return true;
  const ok=reach.filter(w=>P.up.rkt>=wLvl(p,w));
- if(ok.length)return build(p,Math.random()<.6?ok[ok.length-1]:pick(ok),L);
+ /* жертва закрыта щитом, а вскрывать нечем: строим дроны */
+ if(ok.length)return build(p,P.need&&ok.includes(P.need)&&L.st[P.need]<2?P.need:Math.random()<.6?ok[ok.length-1]:pick(ok),L);
  if(P.up.rkt<3&&!researching(p,'rkt'))return upgrade(p,'rkt',L);
  return L.st.pvo<2?build(p,'pvo',L):res();}
+/* кого давить: обидчика, сверхдержаву, того, кто уже ранен. Выбрав жертву, бот держится за неё aiFocus секунд. Возвращает державы по убыванию желания */
+function aiFoes(p){const P=PW[p],D=CFG.diff[diff],out=[];
+ POWERS.forEach((_,o)=>{if(!PW[o].alive||team[o]===team[p])return;const L=lands(o);if(!L.length)return;
+  const hp=L.reduce((a,t)=>a+t.hp,0)/L.reduce((a,t)=>a+t.maxHp,0);
+  out.push([o,(1+P.grudge[o]*CFG.aiRevenge+(o===dom?CFG.dom.focus:0)+1.5*(1-hp))*(humans.has(o)?D.aggro:1)*(o===P.foe&&time<P.foeT?CFG.aiStick:1)*(.85+.3*Math.random())]);});
+ return out.sort((a,b)=>b[1]-a[1]).map(a=>a[0]);}
+/* план удара по земле: чем и в каком порядке бить, чтобы вскрыть щит и добить. list пуст, если удар только зря сожжёт ракеты о купол */
+function strikePlan(p,t,max){const A={};for(const w of WK)A[w]=lands(p).reduce((a,s)=>a+(ang(s,t)<=wRange(p,w)?s.st[w]:0),0);
+ const per=dronesPer(t.owner),full=w=>dmgTo(p,w,t)*wCount(p,w),out=[];let cov=cover(t),hp=t.hp,hurt=0;
+ while(out.length<max&&hp>0){let w=null;
+  if(cov>0){
+   /* щит стоит: дроны выжирают заряды дешевле всего; гиперзвук идёт сквозь купол; МБР проходит, когда зарядов меньше двух; лёгкие ракеты выбивают заряды */
+   if(A.d>0){A.d--;out.push('d');const n=wCount(p,'d'),eat=Math.min(cov,Math.ceil(n/per)),d=Math.max(0,n-eat*per)*dmgTo(p,'d',t);cov-=eat;hp-=d;hurt+=d;continue;}
+   w=A.h>0?'h':cov<2&&A.i>0?'i':A.t>0?'t':A.m>0?'m':null;if(!w)break;
+   if(w==='t'||w==='m'){A[w]--;out.push(w);cov=Math.max(0,cov-wCount(p,w));continue;}}
+  else{const ok=WK.filter(k=>A[k]>0);if(!ok.length)break;
+   /* добивание: самое слабое из того, что убивает; иначе самое сильное */
+   w=ok.filter(k=>full(k)>=hp).sort((a,b)=>full(a)-full(b))[0]||ok.sort((a,b)=>full(b)-full(a))[0];}
+  A[w]--;out.push(w);hp-=full(w);hurt+=full(w);}
+ return{list:hurt>0||(out.length&&out.every(w=>w==='d'))?out:[],kill:hp<=0,blocked:cov>0&&!hurt};}
+/* какую землю жертвы бить: раненую, ту, что сгорит с этого залпа, особый объект или столицу; прошлую цель бот старается добить */
+function aiTarget(p,o,max){const P=PW[p];let best=null,bs=-1,bp=null;
+ for(const t of lands(o)){const pl=strikePlan(p,t,max);if(!pl.list.length){if(pl.blocked&&!P.need)P.need='d';continue;}
+  const sc=(1.7-t.hp/t.maxHp)*(pl.kill?2.2:1)*(t.site?1.4:1)*(t.home===o?1.2:1)*(t.i===P.tgt?1.5:1)/(1+.25*cover(t));
+  if(sc>bs){bs=sc;best=t;bp=pl.list;}}
+ return best&&[best,bp];}
 function aiThink(p){const P=PW[p],D=CFG.diff[diff];if(!P.alive)return;
+ for(let i=0;i<P.grudge.length;i++)P.grudge[i]*=CFG.aiForget;
  for(const L of lands(p).filter(t=>!t.job).sort(()=>Math.random()-.5).slice(0,2))aiLand(p,L);
  if(time<CFG.peace||time<P.atk)return;
- const foes=T.filter(t=>hostile(p,t)),opts=[];
- for(const t of foes){const sh=T.reduce((a,s)=>a+(s.alive&&s.owner===t.owner&&ang(s,t)<=pvoRange(t.owner)?s.st.pvo:0),0);
-  for(const w of WK)if(srcFor(p,w,t))opts.push([w,t,(humans.has(t.owner)?D.aggro:1)*(1.6-t.hp/t.maxHp)*(WPN[w].dmg+2)/(1+.35*sh*(WPN[w].nopvo?0:1))]);}
- if(!opts.length)return;
- let s=opts.reduce((a,o)=>a+o[2],0)*Math.random(),ch=opts[0];for(const o of opts){s-=o[2];if(s<=0){ch=o;break;}}
- fire(p,ch[0],ch[1]);
- /* чем дольше идёт партия, тем больше залп и короче пауза между атаками */
- const extra=Math.min(3,Math.floor(time/480));for(let k=1;k<=extra;k++)later(k*1.5,()=>{const w2=[...WK].reverse().find(w=>srcFor(p,w,ch[1]));if(w2)fire(p,w2,ch[1]);});
- P.atk=time+rnd(CFG.aiAttackCd)*D.tick/(1+time/900);}
+ /* с каждым уровнем эскалации залп больше, а пауза между атаками короче */
+ const max=Math.min(CFG.volleyMax,D.volley+escLvl());P.need=null;
+ for(const o of aiFoes(p)){const pk=aiTarget(p,o,max);if(!pk)continue;
+  if(o!==P.foe){P.foe=o;P.foeT=time+CFG.aiFocus;}
+  const [t,list]=pk,Q=[];for(const w of list){const s=srcFor(p,w,t);if(s){s.st[w]--;s.dirty=true;Q.push([s,w]);}}
+  salvo(p,t,Q);P.tgt=t.i;P.atk=time+rnd(CFG.aiAttackCd)*D.tick/tempo();return;}
+ P.atk=time+6;}
 
 /* ================= СЕТЬ (до пяти игроков, хост считает игру) ================= */
 let netAcc=0;
@@ -851,7 +925,7 @@ function netSend(dt,force=false){if(!isHost()||!net.conn.open)return;netAcc+=dt;
  net.conn.send({t:'s',time,ended:matchEnded,
   L:T.map(t=>{const j=t.job;return[t.owner,t.alive?1:0,+t.hp.toFixed(1),t.maxHp,t.cap?t.cap.by:-1,t.cap?+t.cap.t.toFixed(1):0,t.cap?t.cap.dur:0,t.slots,t.burns,t.st.d,t.st.t,t.st.m,t.st.i,t.st.h,t.st.pvo,j?j.k:'',j?(j.w||''):'',j&&j.k==='c'?j.x:-1,j?+j.t.toFixed(1):0,j?+j.dur.toFixed(1):0,t.auto];}),
   W:PW.map(P=>[P.up.eco,P.up.rkt,P.up.pvo,P.up.arm,P.alive?1:0,P.stat.shots,P.stat.icp,P.stat.cap,P.stat.burn]),
-  P:projs.map(q=>[q.id,q.w,q.si,q.ti,+q.t.toFixed(3),q.dur,q.owner,q.k,q.ph,q.off]),E:netEv.splice(0)});}
+  P:projs.map(q=>[q.id,q.w,q.si,q.ti,+q.t.toFixed(3),q.dur,q.owner,q.k,q.ph,q.off,q.ic&&q.ic.ok?1:0]),E:netEv.splice(0)});}
 function applySnap(m){time=m.time;
  m.L.forEach((a,i)=>{const t=T[i],key=a.slice(0,4).join()+'|'+a.slice(7,17).join()+'|'+a[20];if(t.sk!==key){t.sk=key;t.dirty=true;}
   t.owner=a[0];if(t.alive!==!!a[1]){t.alive=!!a[1];t.marker.visible=t.alive;}t.hp=a[2];t.maxHp=a[3];t.cap=a[4]>=0?{by:a[4],t:a[5],dur:a[6]}:null;
@@ -859,7 +933,7 @@ function applySnap(m){time=m.time;
  m.W.forEach((a,i)=>{const P=PW[i];P.up={eco:a[0],rkt:a[1],pvo:a[2],arm:a[3]};P.alive=!!a[4];if(a.length>8)P.stat={shots:a[5],icp:a[6],cap:a[7],burn:a[8]};});refreshSites();
  const seen=new Set();
  for(const d of m.P){seen.add(d[0]);const q=projs.find(q=>q.id===d[0]);
-  if(!q)mkProj({id:d[0],w:d[1],si:d[2],ti:d[3],t:d[4],dur:d[5],owner:d[6],k:d[7],ph:d[8],off:d[9]});else if(Math.abs(q.t-d[4])>.03)q.t=d[4];}
+  if(!q)mkProj({id:d[0],w:d[1],si:d[2],ti:d[3],t:d[4],dur:d[5],owner:d[6],k:d[7],ph:d[8],off:d[9],sv:!!d[10]});else{q.sv=!!d[10];if(Math.abs(q.t-d[4])>.03)q.t=d[4];}}
  for(const q of projs)if(!seen.has(q.id))killProj(q);
  for(const e of m.E)FXN[e[0]](...e.slice(1));checkEnd();if(m.ended)endMatch();}
 /* сигнал союзникам: хост проверяет и раздаёт только команде отправителя */
@@ -984,7 +1058,7 @@ $('dock').addEventListener('click',async e=>{const b=e.target.closest('button');
  else{S.no();if(!lands(me).some(t=>!t.job))log('все земли заняты: кликни по своей земле и отмени дело крестиком','#fde047');else if(b.dataset.buy&&PW[me].up.rkt>=wLvl(me,b.dataset.buy))log('склад полон: кликни по своей земле и спиши лишнее кнопкой «−1»','#fde047');}});
 
 /* --- круговое меню: кликнул по земле, выбрал чем --- */
-let radT=null,radKey='';
+let radT=null,radKey='',radWs=[],radAll=false,lastW=null;   // lastW: чем стреляли в прошлый раз (ПКМ по врагу повторяет)
 const rkey=t=>[t.owner,t.alive,t.job?.k,t.job?.w,used(t),t.slots,t.auto,...Object.values(PW[me].up)].join();
 function closeRadial(){$('radial').style.display='none';radT=null;}
 const jobTxt=t=>{const j=t.job;return(j.k==='b'?'строит: '+(j.w==='pvo'?'щит':WPN[j.w].n):j.k==='r'?'исследует: '+UP[j.w].n:'захватывает: '+T[j.x].name)+`, ещё ${Math.ceil(j.dur-j.t)} с`;};
@@ -995,12 +1069,16 @@ function placeRadial(){if(!radT)return;
  pv3.project(camera);const mx=Math.min(130,innerWidth/2),rx=THREE.MathUtils.clamp((pv3.x+1)/2*innerWidth,mx,innerWidth-mx),ry=THREE.MathUtils.clamp((1-pv3.y)/2*innerHeight,Math.min(130,innerHeight/2),Math.max(innerHeight/2,innerHeight-200));
  $('radial').style.transform=`translate(${rx.toFixed(1)}px,${ry.toFixed(1)}px)`;}
 const radP=new THREE.Vector3();
-function openRadial(t,p){const R=$('radial'),P=PW[me];let items=[];if(p)radP.copy(p).normalize();else if(radT!==t)radP.copy(t.pos).normalize();
+function openRadial(t,p,re){const R=$('radial'),P=PW[me];let items=[];if(p)radP.copy(p).normalize();else if(radT!==t)radP.copy(t.pos).normalize();
  if(hostile(me,t)){if(time<CFG.peace){log('перемирие: стрелять пока нельзя','#fde047');S.no();return;}
-  items=WK.filter(w=>total(me,w)>0).map(w=>{const n=lands(me).filter(s=>ang(s,t)<=wRange(me,w)).reduce((a,s)=>a+s.st[w],0);
+  /* re: меню перерисовано после пуска. Набор кнопок тот же, чтобы они не прыгали под курсором, пока кликаешь серию */
+  const ws=re?radWs:WK.filter(w=>total(me,w)>0);
+  items=ws.map(w=>{const n=lands(me).filter(s=>ang(s,t)<=wRange(me,w)).reduce((a,s)=>a+s.st[w],0);
    return{c:'fire',w,col:WCOL[w],off:!n,n:n||total(me,w),tip:`${WPN[w].n}: ${n?'урон '+wDmg(me,w)+(wCount(me,w)>1?' × '+wCount(me,w):''):'отсюда не достаёт, смотри кольцо'}`};});
-  if(!items.length){log('нечем стрелять: построй оружие','#fde047');S.no();pulse('.wb[data-buy="t"]');return;}
-  const all=items.reduce((a,i)=>a+(i.off?0:i.n),0);if(all>1)items.push({c:'fire',w:'*',n:Math.min(all,8),tip:'залп: всё, что достаёт'});}
+  if(!items.length){if(re)return closeRadial();log('нечем стрелять: построй оружие','#fde047');S.no();pulse('.wb[data-buy="t"]');return;}
+  const all=items.reduce((a,i)=>a+(i.off?0:i.n),0);if(re&&all<1)return closeRadial();
+  if(re?radAll:all>1)items.push({c:'fire',w:'*',off:all<1,n:Math.min(all,CFG.volleyMax),tip:'залп: всё, что достаёт. Если цель под щитом, дроны и лёгкие ракеты уйдут первыми, тяжёлые следом'});
+  if(!re){radWs=ws;radAll=all>1;}}
  else if(t.owner===me){const busy=!!t.job,full=free(t)<=0;
   /* у каждого оружия три кнопки: большая строит, «−1» внутри круга списывает штуку, «↻» снаружи включает автоповтор */
   items=BK.map(w=>{const lock=P.up.rkt<wLvl(me,w),nm=w==='pvo'?'щит':WPN[w].n;return{c:'buy',w,col:WCOL[w],off:lock||busy||full,n:t.st[w],lock,nm,
@@ -1014,7 +1092,7 @@ function openRadial(t,p){const R=$('radial'),P=PW[me];let items=[];if(p)radP.cop
   items=src.length?src.map(s=>{const d=Math.ceil(capDuration(me,s,t));return{c:'cap',s:s.i,n:d,tip:`${t.adj.includes(s)?'захват':'морская высадка'}: ${t.name} · из ${s.name} · ${d} с${t.site?' · '+SITE[t.site].n+': '+SITE[t.site].desc:''}`};})
    :[{c:'cap',off:true,n:'—',tip:[...t.adj,...t.sea].some(s=>s.alive&&s.owner===me)?'твоя земля у границы занята делом: дождись конца или отмени его':'далеко: нужна своя земля у сухопутной или морской границы'}];}
  else return closeRadial();
- radT=t;radKey=rkey(t);R.style.display='block';placeRadial();if(!radT)return;
+ radT=t;radKey=rkey(t);R.style.display='block';R.classList.toggle('noan',!!re);placeRadial();if(!radT)return;
  const n=items.length,ring=n>=5,rad=ring?Math.max(96,n*60/6.283):84,sp=ring?360/n:n>1?Math.min(44,170/(n-1)):0;
  R.innerHTML=`<i class="ring" style="width:${rad*2}px;height:${rad*2}px;margin:${-rad}px"></i><i class="dot"></i>`+items.map((it,k)=>{const a=(-90+(ring?k:k-(n-1)/2)*sp)*Math.PI/180,cs=Math.cos(a),sn=Math.sin(a),rx=cs*rad,ry=sn*rad,on=t.auto===it.w;
   const ex=it.c!=='buy'?'':(it.n>0?`<button class="rs sc" style="left:${(cs*(rad-45)).toFixed(1)}px;top:${(sn*(rad-45)).toFixed(1)}px;animation-delay:${k*22}ms" data-c="scrap" data-w="${it.w}" data-t="списать 1 шт. (${it.nm}): ячейка освободится сразу" aria-label="списать: ${it.nm}">−1</button>`:'')
@@ -1022,10 +1100,12 @@ function openRadial(t,p){const R=$('radial'),P=PW[me];let items=[];if(p)radP.cop
   return ex+`<button class="rb${it.c==='fire'?'':' cap'}${it.cls?' '+it.cls:''}${it.off?' off':''}" style="left:${rx.toFixed(1)}px;top:${ry.toFixed(1)}px;animation-delay:${k*22}ms${it.col?';color:'+it.col:''}" data-c="${it.c}" data-w="${it.w||''}" data-s="${it.s??-1}" data-t="${it.tip}" aria-label="${it.tip}">${IC[it.ic||(it.c==='cap'?'cap':it.w==='*'?'all':it.w)]}<b class="mono">${it.n}</b></button>`;}).join('');}
 $('radial').addEventListener('click',async e=>{const b=e.target.closest('.rb,.rs');if(!b||!radT)return;if(b.classList.contains('off')){S.no();return;}
  const t=radT,c=b.dataset.c,w=b.dataset.w,s=T[+b.dataset.s]||null;
- /* маленькие кнопки (списать, автоповтор) меню не закрывают: можно нажать несколько раз подряд */
- if(b.classList.contains('rs')){const ix=[...$('radial').querySelectorAll('.rb,.rs')].indexOf(b),kb=document.activeElement===b;
-  if(await order(c,c==='auto'&&b.dataset.on?'':w,t))S.click();else S.no();$('tip').style.display='none';
-  if(radT===t){openRadial(t);if(kb){const B=$('radial').querySelectorAll('.rb,.rs');(B[ix]||B[0])?.focus();}}return;}
+ /* маленькие кнопки (списать, автоповтор) и огонь меню не закрывают: можно накликать серию пусков подряд */
+ if(b.classList.contains('rs')||c==='fire'){const ix=[...$('radial').querySelectorAll('.rb,.rs')].indexOf(b),kb=document.activeElement===b;
+  if(await order(c,c==='auto'&&b.dataset.on?'':w,t)){S.click();
+   if(c==='fire'){lastW=w;tutEvent('fire');if(w==='*'&&cover(t)>0)log('залп: дроны и лёгкие ракеты вскрывают щит, тяжёлые идут следом','#fde047');}}
+  else S.no();$('tip').style.display='none';
+  if(radT===t){openRadial(t,null,c==='fire');if(radT&&kb){const B=$('radial').querySelectorAll('.rb,.rs');(B[ix]||B[0])?.focus();}}return;}
  closeRadial();$('tip').style.display='none';hovW=null;
  const own=c==='buy'||c==='up';
  if(await order(c,w,own?null:t,own?t:s)){c==='fire'?S.click():S.buy();tutEvent(c==='buy'?(w==='pvo'?'pvo':'buy'):c);}else S.no();});
@@ -1037,7 +1117,7 @@ const TUT=[
  {t:'Нажми на ракету внизу: свободная земля начнёт её строить.',on:'buy',hl:'.wb[data-buy="t"]'},
  {t:'Земля делает одно дело за раз. Когда ракета достроится, кликни по серой земле рядом и захвати её.',on:'cap'},
  {t:'Кликни по своей земле и поставь в неё щит. Он сам сбивает то, что летит рядом.',on:'pvo'},
- {t:'Когда кончится перемирие: клик по врагу, потом выбери оружие.',on:'fire'},
+ {t:'Когда кончится перемирие: клик по врагу, потом выбери оружие. Меню не закрывается: жми ещё и ещё. Правая кнопка по врагу повторяет прошлый пуск.',on:'fire'},
  {t:'Справа исследования. Жми ещё раз, чтобы подключить вторую и третью землю: пойдёт быстрее.',on:'up',hl:'.ub[data-up="rkt"]'},
  {t:'Клик по своей земле: круговое меню. У оружия «−1» списывает штуку и освобождает ячейку, «↻» включает автоповтор, крестик отменяет дело.',next:true},
  {t:'Золотые ромбы на карте: особые объекты. Космодром, рудник, радар, завод, бункер, хаб. Захвати землю, и бонус твой. Боты тоже за ними идут.',next:true},
@@ -1068,6 +1148,9 @@ function sendPing(t,pos){setPing(false);if(!running||over)return;const now=perfo
 function stepPings(dt){for(let i=pings.length-1;i>=0;i--){const g=pings[i];g.t-=dt;if(g.t<=0||!running){g.el.remove();pings.splice(i,1);continue;}
   const vis=g.pos.dot(cdir)>1/camera.position.length()+.02;g.el.style.display=vis?'':'none';if(!vis)continue;pv3.copy(g.pos).multiplyScalar(1.014).project(camera);
   g.el.style.opacity=Math.min(1,g.t);g.el.style.transform=`translate(${((pv3.x+1)/2*innerWidth).toFixed(1)}px,${((1-pv3.y)/2*innerHeight).toFixed(1)}px) translate(-50%,0)`;}}
+/* тревога: клик по плашке или клавиша T переносит камеру к земле, по которой летит самое опасное */
+function jumpAlarm(i){const t=Number.isInteger(i)&&T[i]?T[i]:warnList[0]?.[0];if(!t){S.no();return;}S.click();closeRadial();kbMode=false;flyTo(t.pos,Math.min(camera.position.length(),2.4));}
+$('warn').addEventListener('pointerdown',e=>{const b=e.target.closest('button');if(b)jumpAlarm(+b.dataset.i);});
 function focusPower(i){const L=lands(i),t=L.find(x=>x===POWERS[i].home)||L.sort((a,b)=>b.hp-a.hp)[0];if(!t){S.no();return;}S.click();closeRadial();flyTo(t.pos,THREE.MathUtils.clamp(camera.position.length(),2.2,3.2));}
 
 /* --- клавиатура: WASD и стрелки крутят глобус, Q/E зум. В этом режиме землю выбирает прицел в центре экрана --- */
@@ -1092,11 +1175,12 @@ addEventListener('keydown',async e=>{if(!running||e.ctrlKey||e.metaKey||['INPUT'
  if(MOVE[k]||ZIN.includes(k)||ZOUT.includes(k)){e.preventDefault();keys.add(k);if(MOVE[k]){kbMode=true;fly=null;controls.autoRotate=false;}return;}
  if(k==='Tab'){e.preventDefault();if(!over)cycleLand(e.shiftKey?-1:1);return;}
  if(k==='KeyV'){togglePvo();return;}
+ if(k==='KeyT'){jumpAlarm();return;}
  if(k==='KeyG'){const t=landUnder();if(t||globeAt(kbMode?innerWidth/2:mx,kbMode?innerHeight/2:my,hitP))sendPing(t,hitP);else S.no();return;}
  if(k==='Enter'||k==='KeyF'){if(k==='Enter'&&e.target.tagName==='BUTTON')return;e.preventDefault();const t=landUnder();
   if(over||!t||!t.alive||!PW[me].alive){S.no();return;}S.click();openRadial(t,hitP);if(radT)radFocus(1);return;}
  const t=kbMode?landUnder():hov;
- if(n>=0&&n<5&&t&&hostile(me,t)){if(await order('fire',WK[n],t)){S.click();tutEvent('fire');}else S.no();}
+ if(n>=0&&n<5&&t&&hostile(me,t)){if(await order('fire',WK[n],t)){lastW=WK[n];S.click();tutEvent('fire');}else S.no();}
  else if(n>=0&&t&&t.owner===me){if(await order('buy',BK[n],null,t)){S.buy();tutEvent(n===5?'pvo':'buy');}else S.no();}});
 addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>keys.clear());
 const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
@@ -1120,10 +1204,15 @@ let down=null;const cv=renderer.domElement;
 cv.addEventListener('wheel',e=>{e.preventDefault();const k=e.deltaMode===1?.06:e.ctrlKey?.012:.0016;zoomT=THREE.MathUtils.clamp(zoomT*Math.exp(e.deltaY*k),1.3,5.5);fly=null;},{passive:false});
 cv.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];fly=null;controls.autoRotate=false;closeRadial();});
 cv.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault();});
-cv.addEventListener('pointerup',e=>{if(!down)return;const moved=Math.hypot(e.clientX-down[0],e.clientY-down[1]);down=null;if(moved>10||(e.button!==0&&e.button!==1))return;
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+cv.addEventListener('pointerup',async e=>{if(!down)return;const moved=Math.hypot(e.clientX-down[0],e.clientY-down[1]);down=null;if(moved>10||e.button>2)return;
  const t=landAt(e.clientX,e.clientY);
  if(!running){if(e.button===0&&!over&&t&&t.home>=0)$('pick').children[t.home].click();return;}
  if(e.altKey||pingMode||e.button===1){if(t||globeAt(e.clientX,e.clientY,hitP))sendPing(t,hitP);return;}
+ /* правая кнопка по врагу: ещё один пуск тем же, чем стреляли в прошлый раз, без меню */
+ if(e.button===2){if(over||!t||!hostile(me,t)||!PW[me].alive)return;
+  if(!lastW){log('правая кнопка повторяет прошлый пуск: сначала выбери оружие в меню','#fde047');S.no();return;}
+  if(await order('fire',lastW,t)){S.click();tutEvent('fire');}else S.no();return;}
  if(over||!t||!t.alive||!PW[me].alive)return;S.click();openRadial(t,hitP);});
 cv.addEventListener('pointermove',e=>{mx=e.clientX;my=e.clientY;if(e.movementX||e.movementY)kbMode=false;if(down||kbMode)return;setHov(landAt(mx,my));});
 
@@ -1139,6 +1228,8 @@ function drawLabels(){camera.updateMatrixWorld();cdir.copy(camera.position).norm
    /* склад: значок оружия и сколько его лежит, пустые квадраты — свободные ячейки */
    if(mine){let h='';for(const w of BK)if(t.st[w]||t.auto===w)h+=`<span class="k${t.auto===w?' au':''}" style="color:${WCOL[w]}">${IC[w]}${t.st[w]||''}${t.auto===w?'↻':''}</span>`;sl.innerHTML=h+'<i></i>'.repeat(Math.max(0,free(t)));sl.classList.toggle('emp',!h);}
    /* особый объект: значок и название видно всегда, описание бонуса — при наведении */
+   /* по земле летит волна: сразу видно, выдержит ли щит */
+   {const th=L.children[5],v=t.th;th.style.display=v?'':'none';if(v){th.className='th'+(v.hits?'':' s');th.textContent=(v.kill?'СГОРИТ':v.hits?'ПРОБЬЁТ −'+Math.round(v.dmg):'ЩИТ ДЕРЖИТ')+' · летит '+v.n;}}
    const st=L.children[4];st.style.display=t.site?'':'none';if(t.site){const o=SITE[t.site];st.innerHTML=`${IC[o.ic]}<span>${o.n}</span><small>${o.desc}</small>`;}}
   const jb=L.children[3],j=mine&&t.job?t.job:null,cp=!j&&running&&t.cap&&team[t.cap.by]===team[me]?t.cap:null,jk=j?j.k+(j.w||''):cp?'cap':'';
   if(L._jk!==jk){L._jk=jk;L._jp=L._js=null;jb.style.display=jk?'':'none';
@@ -1153,21 +1244,31 @@ function drawLabels(){camera.updateMatrixWorld();cdir.copy(camera.position).norm
 const hp0=p=>Math.round(CFG.homeHp*hpMul(p));
 const powerRows=POWERS.map(p=>{const row=document.createElement('div');row.className='pr';row.style.color=p.color;
  row.innerHTML=`<i></i><span>${p.a3}</span><div class="bar"><b></b></div>`;row.onclick=()=>focusPower(POWERS.indexOf(p));$('plist').appendChild(row);return row;});
-let hudT=0,warned=false,siteKey='?';
+const ESC=['ПРОВОКАЦИИ','ОБМЕН УДАРАМИ','БОЛЬШАЯ ВОЙНА','ТОТАЛЬНАЯ ВОЙНА','СУДНЫЙ ДЕНЬ'];   // уровни эскалации
+let hudT=0,warned=false,siteKey='?',warnList=[],escSeen=-1,escUp=0;
 function drawHud(dt){hudT-=dt;if(hudT>0)return;hudT=.3;if(!over)refreshDock();
- const hp=POWERS.map(()=>0);for(const t of T)if(t.alive&&t.owner>=0)hp[t.owner]+=t.hp;
+ const hp=POWERS.map(()=>0),dm=dominant();for(const t of T)if(t.alive&&t.owner>=0)hp[t.owner]+=t.hp;
  powerRows.map((_,i)=>i).sort((a,b)=>(b===me)-(a===me)||(b===him)-(a===him)||hp[b]-hp[a]).forEach((i,rank)=>{
   const row=powerRows[i],p=POWERS[i],human=humans.has(i);row.style.order=rank;
-  row.classList.toggle('dead',hp[i]<=0);row.classList.toggle('me',i===me);row.classList.toggle('hum',i!==me&&human);
-  row.dataset.t=`${p.name}${i===me?' · ты':human?(allied?' · союзник':' · игрок'):''} · ${p.abil} · клик: показать на глобусе`;
+  row.classList.toggle('dead',hp[i]<=0);row.classList.toggle('me',i===me);row.classList.toggle('hum',i!==me&&human);row.classList.toggle('dom',i===dm);
+  row.dataset.t=`${p.name}${i===me?' · ты':human?(allied?' · союзник':' · игрок'):''} · ${p.abil}${i===dm?' · сверхдержава: боты бьют её первой, снабжение растянуто':''} · клик: показать на глобусе`;
   row.lastChild.firstChild.style.width=Math.min(100,hp[i]/(hp0(i)*1.6)*100)+'%';});
  /* какие особые объекты сейчас мои */
  {const mineS=SK.filter(k=>has(me,k)),key=mineS.join();if(key!==siteKey){siteKey=key;$('sitebar').innerHTML=mineS.map(k=>`<span class="ib" data-t="${SITE[k].n}: ${SITE[k].desc}">${IC[SITE[k].ic]}</span>`).join('');}}
  const left=Math.ceil(CFG.peace-time),m=Math.floor(time/60),s=Math.floor(time%60);$('clock').textContent=left>0?`ПЕРЕМИРИЕ ${left}`:String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
- const inc=projs.filter(q=>q.T.owner===me&&q.T.alive&&team[q.owner]!==team[me]);
- const names=[...new Set(inc.map(q=>`${WPN[q.w].s} → ${q.T.name}`))];
- $('warn').style.display=names.length?'block':'none';$('warn').textContent=names.slice(0,3).join('  ·  ');
- if(names.length&&!warned)S.alarm();warned=!!names.length;
+ /* эскалация: уровень войны, темп строек и цена размера державы */
+ {const E=$('esc'),war=left<=0,pr=(tempo()-1)/CFG.escStep,lv=Math.min(Math.floor(pr+1e-9),ESC.length-1),st=strain(me);E.style.display=war?'flex':'none';
+  if(war){E.style.color=`hsl(${48-lv*12} 95% 62%)`;
+   E.innerHTML=`<span>${ESC[lv]}</span><span class="ep">${ESC.map((_,i)=>`<i><b style="width:${Math.round(Math.max(0,Math.min(1,pr-i))*100)}%"></b></i>`).join('')}</span><span>темп +${Math.round((tempo()-1)*100)}%</span>${st>0?`<span class="sup">снабжение −${Math.round(st/(1+st)*100)}%</span>`:''}`;
+   if(lv!==escSeen){escSeen=lv;escUp=time+3;log(lv?`эскалация: ${ESC[lv].toLowerCase()}. Стройки быстрее, залпы ботов больше`:`перемирие кончилось: ${ESC[0].toLowerCase()}`,'#fde047');}
+   E.classList.toggle('up',time<escUp);}}
+ /* тревога: по каждой моей земле под ударом — сколько летит и выдержит ли щит. Самое опасное первым */
+ const TH=new Map();for(const q of projs)if(!q.dead&&q.T.alive&&q.T.owner===me&&team[q.owner]!==team[me]&&!TH.has(q.T))TH.set(q.T,threat(q.T));
+ for(const t of T){const v=TH.get(t)||null,k=v?[v.n,v.hits,v.kill,Math.round(v.dmg)].join():'';if((t.thk||'')!==k){t.thk=k;t.th=v;t.dirty=true;}}
+ warnList=[...TH].filter(a=>a[1]).sort((a,b)=>b[1].kill-a[1].kill||b[1].dmg-a[1].dmg||a[1].eta-b[1].eta);
+ $('warn').style.display=warnList.length?'flex':'none';
+ $('warn').innerHTML=warnList.slice(0,3).map(([t,v])=>`<button data-i="${t.i}" class="${v.kill?'k':v.hits?'b':'s'}">${t.name}: летит ${v.n} · ${v.kill?'ЗЕМЛЯ СГОРИТ':v.hits?`ПРОБЬЁТ ${v.hits}, −${Math.round(v.dmg)}`:'ЩИТ ДЕРЖИТ'} · ${Math.ceil(v.eta)}с</button>`).join('');
+ if(warnList.length&&!warned)S.alarm();warned=!!warnList.length;
 }
 let endTimer=null,watching=false;
 /* итоги боя по державам; жёлтым отмечен лучший результат в столбце */
@@ -1195,7 +1296,7 @@ function clearBattleVisuals(){
  for(const t of T){t.marker.visible=true;t.col.set(pcol(t.owner));if(t.dome)t.dome.visible=false;}
 }
 function resetToLobby(){
- running=paused=over=matchEnded=watching=allied=false;time=hudT=netAcc=0;warned=false;humans.clear();team=POWERS.map((_,i)=>i);
+ running=paused=over=matchEnded=watching=allied=false;time=hudT=netAcc=0;warned=false;dom=-1;escSeen=-1;warnList=[];humans.clear();team=POWERS.map((_,i)=>i);
  clearTimeout(endTimer);endTimer=null;clearOrders();sched.length=netEv.length=0;
  T.forEach(t=>Object.assign(t,landState(t.home)));PW.forEach(p=>Object.assign(p,powerState()));clearBattleVisuals();
  closeRadial();tut.on=false;
@@ -1299,7 +1400,6 @@ function tick(raw){GU.uTime.value+=raw;
  controls.rotateSpeed=THREE.MathUtils.clamp((camera.position.length()-1)*.42,.06,.9);
  controls.update();
  shake*=Math.pow(.02,raw);shakeV.set(Math.random()-.5,Math.random()-.5,Math.random()-.5).multiplyScalar(shake);camera.position.add(shakeV);
- dust.rotation.y+=raw*.01;
  const dt=running&&!paused?raw:0;
  if(dt>0){if(isGuest())stepProjs(dt,false);else sim(dt);lastSim=performance.now();drawHud(dt);}
  stepVis(raw);drawLabels();stepPings(raw);if(radT)placeRadial();
